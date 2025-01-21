@@ -34,7 +34,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
       switch (change.operationType) {
         case 'insert':
           await this.info
-            .updateOne({ _id: change.fullDocument.credential }, { $set: { parent: change.fullDocument._id } })
+            .updateOne({ _id: change.fullDocument.info }, { $set: { parent: change.fullDocument._id } })
             .exec()
             .then((result) => {
               this.logger.log(JSON.stringify(result));
@@ -45,7 +45,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
           break;
         case 'update':
           await this.info
-            .updateOne({ _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.credential) }, { $set: { parent: change.documentKey._id } })
+            .updateOne({ _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.info) }, { $set: { parent: change.documentKey._id } })
             .exec()
             .then((result) => {
               this.logger.log(JSON.stringify(result));
@@ -103,9 +103,19 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
     });
   }
   async Read(): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       return this.info
         .find()
+        .populate({
+          path: 'preference',
+          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
+          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
+        })
+        .populate({
+          path: 'parent',
+          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
+          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
+        })
         .exec()
         .then((result) => {
           return resolve({

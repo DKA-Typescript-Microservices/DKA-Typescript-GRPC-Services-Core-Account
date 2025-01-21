@@ -41,11 +41,24 @@ export class AccountService {
   }
 
   async Read(): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       return this.account
         .find()
-        .populate('info')
-        .populate('credential')
+        .populate({
+          path: 'preference',
+          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
+          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
+        })
+        .populate({
+          path: 'info',
+          match: {}, // Sama seperti di atas, biarkan jika tidak ada data
+          options: { lean: true },
+        })
+        .populate({
+          path: 'credential',
+          match: {}, // Biarkan jika data credential tidak ada
+          options: { lean: true },
+        })
         .exec()
         .then((result) => {
           return resolve({

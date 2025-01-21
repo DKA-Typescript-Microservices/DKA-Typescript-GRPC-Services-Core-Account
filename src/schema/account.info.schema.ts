@@ -1,18 +1,28 @@
 import mongoose from 'mongoose';
 import { IAccountInfo } from '../model/account.info.model';
-import { AccountModel } from './account.schema';
 import { EncryptionHelper } from '../security/encryption.helper';
+import { ModelConfig } from '../config/model.config';
 
 export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   {
     preference: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: ModelConfig.account,
+      validate: {
+        validator: async function (value) {
+          return !!(await this.model(ModelConfig.account).exists({
+            _id: value,
+          }));
+        },
+        message: 'reference account is not exists',
+      },
     },
     parent: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: ModelConfig.account,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(AccountModel.modelName).exists({
+          return !!(await this.model(ModelConfig.account).exists({
             _id: value,
           }));
         },
@@ -32,7 +42,7 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
     },
   },
   {
-    collection: 'account-info',
+    collection: ModelConfig.accountInfo,
     versionKey: false,
     strict: true,
     toJSON: {
@@ -45,6 +55,6 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   },
 );
 
-export const AccountInfoModel = mongoose.model('account-info', AccountInfoSchema);
+export const AccountInfoModel = mongoose.model(ModelConfig.accountInfo, AccountInfoSchema);
 
 export default AccountInfoSchema;

@@ -89,9 +89,19 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
     });
   }
   async Read(): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       return this.credential
         .find()
+        .populate({
+          path: 'preference',
+          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
+          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
+        })
+        .populate({
+          path: 'parent',
+          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
+          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
+        })
         .exec()
         .then((result) => {
           return resolve({

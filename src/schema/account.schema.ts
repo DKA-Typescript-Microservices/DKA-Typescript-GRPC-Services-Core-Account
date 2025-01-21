@@ -2,14 +2,16 @@ import { IAccount } from '../model/account.model';
 import mongoose from 'mongoose';
 import { AccountInfoModel } from './account.info.schema';
 import { AccountCredentialModel } from './account.credential.schema';
+import { ModelConfig } from '../config/model.config';
 
 export const AccountSchema = new mongoose.Schema<IAccount>(
   {
     preference: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: ModelConfig.account,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(AccountModel.modelName).exists({
+          return !!(await this.model(ModelConfig.account).exists({
             _id: value,
           }));
         },
@@ -18,10 +20,10 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     },
     info: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: AccountInfoModel.modelName,
+      ref: ModelConfig.accountInfo,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(AccountInfoModel.modelName).exists({
+          return !!(await this.model(ModelConfig.accountInfo).exists({
             _id: value,
           }));
         },
@@ -30,11 +32,11 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     },
     credential: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: AccountCredentialModel.modelName,
+      ref: ModelConfig.accountCredential,
       required: true,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(AccountCredentialModel.modelName).exists({
+          return !!(await this.model(ModelConfig.accountCredential).exists({
             _id: value,
           }));
         },
@@ -43,7 +45,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     },
   },
   {
-    collection: 'account',
+    collection: ModelConfig.account,
     versionKey: false,
     strict: true,
     toJSON: {
@@ -56,6 +58,6 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
   },
 );
 
-export const AccountModel = mongoose.model('account', AccountSchema);
+export const AccountModel = mongoose.model(ModelConfig.account, AccountSchema);
 
 export default AccountSchema;
