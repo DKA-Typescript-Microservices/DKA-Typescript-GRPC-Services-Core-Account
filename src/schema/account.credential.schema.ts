@@ -1,12 +1,12 @@
 import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../model/account.credential.model';
 import { AccountModel } from './account.schema';
+import { EncryptionHelper } from '../security/encryption.helper';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
     preference: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: AccountModel.modelName,
       validate: {
         validator: async function (value) {
           return !!(await this.model(AccountModel.modelName).exists({
@@ -18,8 +18,6 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     },
     parent: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: AccountModel.modelName,
-      required: true,
       validate: {
         validator: async function (value) {
           return !!(await this.model(AccountModel.modelName).exists({
@@ -32,9 +30,28 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     username: {
       type: mongoose.Schema.Types.String,
       required: true,
+      get: EncryptionHelper.decrypt,
+      set: EncryptionHelper.encrypt,
+    },
+    password: {
+      type: mongoose.Schema.Types.String,
+      required: true,
+      get: EncryptionHelper.decrypt,
+      set: EncryptionHelper.encrypt,
     },
   },
-  { collection: 'account-credential', versionKey: false, strict: true },
+  {
+    collection: 'account-credential',
+    versionKey: false,
+    strict: true,
+    toJSON: {
+      getters: true,
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret._id; // Hapus _id agar tidak duplikat dengan id
+      },
+    },
+  },
 );
 
 export const AccountCredentialModel = mongoose.model(

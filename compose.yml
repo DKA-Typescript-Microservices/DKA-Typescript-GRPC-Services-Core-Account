@@ -1,0 +1,63 @@
+name: dka-services-core-account
+
+services:
+  app:
+    image: yovanggaanandhika/node:latest
+    container_name: dka-services-core-account-app
+    hostname: dka-services-core-account-app
+    environment:
+      DKA_MONGO_HOST: dka-services-core-account-mongo
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        host_ip: 0.0.0.0
+    volumes:
+      - type: bind
+        source: .
+        target: /home/app
+    deploy:
+      resources:
+        reservations:
+          memory: 128M
+          cpus: '0.5'
+        limits:
+          memory: 1024M
+          cpus: '0.8'
+    command: yarn run start:dev
+    networks:
+      - default
+
+  mongo:
+    image: yovanggaanandhika/mongo:12-slim
+    container_name: dka-services-core-account-mongo
+    hostname: dka-services-core-account-mongo
+    deploy:
+      resources:
+        reservations:
+          memory: 128M
+          cpus: '0.5'
+        limits:
+          memory: 512M
+          cpus: '0.8'
+    ports:
+      - target: 27017
+        published: 27017
+        protocol: tcp
+        host_ip: 0.0.0.0
+    volumes:
+      - type: volume
+        source: mongo
+        target: /data/db
+    networks:
+      - default
+
+
+volumes:
+  mongo:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+

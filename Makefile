@@ -1,6 +1,8 @@
 
 
-proto:
-	npx protoc --plugin=protoc-gen-ts=$(which protoc-gen-ts) \
-    --ts_out=./src/model \
-    --proto_path=./src/proto ./src/proto/*.proto
+default:
+	yarn run build
+	docker compose up -d app --force-recreate
+all:
+	docker compose down
+	docker compose up -d

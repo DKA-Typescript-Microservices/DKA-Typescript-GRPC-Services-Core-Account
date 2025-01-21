@@ -13,7 +13,7 @@ import * as process from 'node:process';
           process.env.DKA_SERVER_HOST || '0.0.0.0',
         )
         .then((result) => {
-          logger.verbose(result);
+          logger.verbose(JSON.stringify(result));
         })
         .catch((error) => {
           logger.error(error);

@@ -2,11 +2,16 @@
   "name": "account",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": {
+    "name": "YovanggaAnandhika",
+    "email": "dka.tech.dev@gmail.com"
+  },
+  "main": "dist/main.js",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "postbuild": "javascript-obfuscator dist --output dist --config javascript-obfuscator.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -26,6 +31,7 @@
     "@nestjs/microservices": "^11.0.3",
     "@nestjs/mongoose": "^11.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "javascript-obfuscator": "^4.1.1",
     "mongoose": "^8.9.5",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"

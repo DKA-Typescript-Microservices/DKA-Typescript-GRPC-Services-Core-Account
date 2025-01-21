@@ -42,7 +42,18 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       },
     },
   },
-  { collection: 'account', versionKey: false, strict: true },
+  {
+    collection: 'account',
+    versionKey: false,
+    strict: true,
+    toJSON: {
+      getters: true,
+      virtuals: true,
+      transform: function (doc, ret) {
+        delete ret._id; // Hapus _id agar tidak duplikat dengan id
+      },
+    },
+  },
 );
 
 export const AccountModel = mongoose.model('account', AccountSchema);
