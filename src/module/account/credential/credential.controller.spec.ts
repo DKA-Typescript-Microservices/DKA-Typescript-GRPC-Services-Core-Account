@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CredentialController } from './credential.controller';
 import { CredentialService } from './credential.service';
-import { DatabaseConnectionConfig } from '../../../config/database.connection.config';
+import { DatabaseConnectionConfig } from '../../../config/const/database.connection.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import AccountCredentialSchema, { AccountCredentialModel } from '../../../schema/account.credential.schema';
 

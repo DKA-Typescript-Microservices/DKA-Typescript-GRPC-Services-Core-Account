@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { InfoService } from './info.service';
 import { InfoController } from './info.controller';
-import { DatabaseConnectionConfig } from '../../../config/database.connection.config';
+import { DatabaseConnectionConfig } from '../../../config/const/database.connection.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import AccountInfoSchema, { AccountInfoModel } from '../../../schema/account.info.schema';
 import AccountSchema, { AccountModel } from '../../../schema/account.schema';

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
-import { DatabaseConnectionConfig } from '../../config/database.connection.config';
+import { DatabaseConnectionConfig } from '../../config/const/database.connection.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import AccountSchema, { AccountModel } from '../../schema/account.schema';
 import { InfoModule } from './info/info.module';

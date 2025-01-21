@@ -7,8 +7,8 @@ export const EncryptionHelper = {
   encrypt: (data) => {
     if (data === undefined) return undefined;
     // Membaca kunci publik
-    const pathPublic = path.dirname(require.main.path);
-    const publicKey = readFileSync(path.join(pathPublic, './cert/public.key'), 'utf8');
+    const pathPublic = path.dirname(require.main.filename);
+    const publicKey = readFileSync(path.join(pathPublic, './config/ssl/server/public.key'), 'utf8');
     // Enkripsi data menggunakan public key
     const encrypted = publicEncrypt(publicKey, Buffer.from(data));
     // Hash hasil enkripsi menggunakan SHA-256
@@ -17,8 +17,8 @@ export const EncryptionHelper = {
   decrypt: (encryptedData) => {
     if (encryptedData === undefined) return undefined;
     // Membaca kunci publik
-    const pathPublic = path.dirname(require.main.path);
-    const privateKey = readFileSync(path.join(pathPublic, './cert/private.key'), 'utf8');
+    const pathPublic = path.dirname(require.main.filename);
+    const privateKey = readFileSync(path.join(pathPublic, './config/ssl/server/private.key'), 'utf8');
     // Mengonversi data yang telah dienkripsi dari hex ke buffer
     const bufferData = Buffer.from(encryptedData, 'hex');
     // Dekripsi data menggunakan private key

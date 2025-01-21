@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../model/database/account.credential.model';
 import { AccountModel } from './account.schema';
 import { EncryptionHelper } from '../security/encryption.helper';
-import { ModelConfig } from '../config/model.config';
+import { ModelConfig } from '../config/const/model.config';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {

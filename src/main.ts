@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ModuleModule } from './module/module.module';
 import { Logger } from '@nestjs/common';
 import { GrpcOptions } from '@nestjs/microservices';
-import { MicroservicesServerConfig } from './config/microservices.server.config';
+import { MicroservicesServerConfig } from './config/const/microservices.server.config';
 
 (async () => {
   const logger: Logger = new Logger('Services Runner');

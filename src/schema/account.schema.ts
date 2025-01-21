@@ -1,6 +1,6 @@
 import { IAccount } from '../model/database/account.model';
 import mongoose from 'mongoose';
-import { ModelConfig } from '../config/model.config';
+import { ModelConfig } from '../config/const/model.config';
 
 export const AccountSchema = new mongoose.Schema<IAccount>(
   {

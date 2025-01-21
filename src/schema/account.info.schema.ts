@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { IAccountInfo } from '../model/database/account.info.model';
 import { EncryptionHelper } from '../security/encryption.helper';
-import { ModelConfig } from '../config/model.config';
+import { ModelConfig } from '../config/const/model.config';
 
 export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   {

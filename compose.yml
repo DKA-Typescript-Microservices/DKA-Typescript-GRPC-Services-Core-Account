@@ -24,7 +24,6 @@ services:
         limits:
           memory: 1024M
           cpus: '0.8'
-    command: yarn run start:dev
     networks:
       - default
 
