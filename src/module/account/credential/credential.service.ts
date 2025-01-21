@@ -14,30 +14,28 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
   @InjectModel(AccountCredentialModel.modelName)
   private readonly credential: Model<IAccountCredential>;
 
+  private AccountChanges: mongoose.mongo.ChangeStream<any, any> | undefined;
+
   async onModuleInit() {
-    const AccountChanges = this.account.watch([
+    this.AccountChanges = this.account.watch([
       {
         $match: {
           $or: [
             { 'fullDocument.credential': { $exists: true } }, // Detect inserts with 'credential'
             { 'updateDescription.updatedFields.credential': { $exists: true } }, // Detect updates to 'credential'
+            // Deteksi delete, kita hanya butuh 'documentKey' untuk ID dokumen yang dihapus
+            { operationType: 'delete' },
           ],
         },
       },
     ]);
-    AccountChanges.on('change', async (change) => {
+
+    this.AccountChanges.on('change', async (change) => {
       // Handle specific change types
       switch (change.operationType) {
         case 'insert':
           await this.credential
-            .updateOne(
-              { _id: change.fullDocument.credential },
-              {
-                $set: {
-                  parent: change.fullDocument._id,
-                },
-              },
-            )
+            .updateOne({ _id: change.fullDocument.credential }, { $set: { parent: change.fullDocument._id } })
             .exec()
             .then((result) => {
               this.logger.log(JSON.stringify(result));
@@ -48,14 +46,7 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
           break;
         case 'update':
           await this.credential
-            .updateOne(
-              { _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.credential) },
-              {
-                $set: {
-                  parent: change.documentKey._id,
-                },
-              },
-            )
+            .updateOne({ _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.credential) }, { $set: { parent: change.documentKey._id } })
             .exec()
             .then((result) => {
               this.logger.log(JSON.stringify(result));
@@ -65,40 +56,35 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
             });
           break;
         case 'delete':
-          this.logger.log(`Account deleted: _id=${change.documentKey._id}`);
+          await this.credential
+            .updateOne({ parent: change.documentKey._id }, { $unset: { parent: '' } })
+            .exec()
+            .then((result) => {
+              this.logger.log(JSON.stringify(result));
+            })
+            .catch((error) => {
+              this.logger.error(JSON.stringify(error));
+            });
           break;
       }
     });
   }
 
-  async onModuleDestroy() {}
+  async onModuleDestroy() {
+    await this.AccountChanges.close();
+  }
 
   async Create(payload: { header?: any; body?: any; query?: any }): Promise<any> {
     return new Promise((resolve, reject) => {
-      if (payload.body === undefined)
-        return reject({
-          status: false,
-          code: HttpStatus.BAD_REQUEST,
-          msg: `Body Request Is Empty`,
-        });
+      if (payload.body === undefined) return reject({ status: false, code: HttpStatus.BAD_REQUEST, msg: `Body Request Is Empty` });
       const model = new this.credential(payload.body);
       return model
         .save()
         .then((result) => {
-          return resolve({
-            status: true,
-            code: HttpStatus.OK,
-            msg: `Successfully Create Data`,
-            data: result,
-          });
+          return resolve({ status: true, code: HttpStatus.OK, msg: `Successfully Create Data`, data: result });
         })
         .catch((error) => {
-          return reject({
-            status: false,
-            code: HttpStatus.SERVICE_UNAVAILABLE,
-            msg: `Failed To Insert To Database`,
-            error: error,
-          });
+          return reject({ status: false, code: HttpStatus.SERVICE_UNAVAILABLE, msg: `Failed To Insert To Database`, error: error });
         });
     });
   }

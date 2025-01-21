@@ -10,14 +10,8 @@ import AccountSchema, { AccountModel } from '../../../schema/account.schema';
   imports: [
     DatabaseConnectionConfig,
     MongooseModule.forFeature([
-      {
-        schema: AccountSchema,
-        name: AccountModel.modelName,
-      },
-      {
-        schema: AccountCredentialSchema,
-        name: AccountCredentialModel.modelName,
-      },
+      { schema: AccountSchema, name: AccountModel.modelName },
+      { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },
     ]),
   ],
   controllers: [CredentialController],

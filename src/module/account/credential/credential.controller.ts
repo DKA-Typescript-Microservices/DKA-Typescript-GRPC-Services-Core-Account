@@ -9,11 +9,7 @@ export class CredentialController {
   @Post()
   async Create(@Response() response, @Headers() header, @Body() body, @Query() query) {
     return this.credentialService
-      .Create({
-        header,
-        body,
-        query,
-      })
+      .Create({ header, body, query })
       .then((result) => {
         return response.status(result.code).send(result);
       })

@@ -9,15 +9,7 @@ describe('CredentialService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        DatabaseConnectionConfig,
-        MongooseModule.forFeature([
-          {
-            schema: AccountCredentialSchema,
-            name: AccountCredentialModel.modelName,
-          },
-        ]),
-      ],
+      imports: [DatabaseConnectionConfig, MongooseModule.forFeature([{ schema: AccountCredentialSchema, name: AccountCredentialModel.modelName }])],
       providers: [CredentialService],
     }).compile();
 
