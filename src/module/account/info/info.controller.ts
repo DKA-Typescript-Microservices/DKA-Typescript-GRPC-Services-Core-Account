@@ -1,6 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
 import { InfoService } from './info.service';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { AccountInfoCreateResponse, AccountInfoReadRequest, AccountInfoReadResponse, IAccountInfo } from '../../../model/proto/info/account.info.gprc';
 
@@ -21,7 +21,11 @@ export class InfoController {
         return result;
       })
       .catch((error) => {
-        return error;
+        throw new RpcException({
+          code: error.code,
+          message: error.msg,
+          additionalInfo: error.error,
+        });
       });
   }
 
@@ -38,7 +42,11 @@ export class InfoController {
       })
       .catch((error) => {
         this.logger.error(error);
-        return error;
+        throw new RpcException({
+          code: error.code,
+          message: error.msg,
+          additionalInfo: error.error,
+        });
       });
   }
 }

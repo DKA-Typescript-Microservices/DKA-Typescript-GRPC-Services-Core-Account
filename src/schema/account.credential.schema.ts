@@ -1,7 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../model/database/account.credential.model';
-import { AccountModel } from './account.schema';
-import { EncryptionHelper } from '../security/encryption.helper';
 import { ModelConfig } from '../config/const/model.config';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
@@ -33,20 +31,14 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     email: {
       type: mongoose.Schema.Types.String,
       required: true,
-      get: EncryptionHelper.decrypt,
-      set: EncryptionHelper.encrypt,
     },
     username: {
       type: mongoose.Schema.Types.String,
       required: true,
-      get: EncryptionHelper.decrypt,
-      set: EncryptionHelper.encrypt,
     },
     password: {
       type: mongoose.Schema.Types.String,
       required: true,
-      get: EncryptionHelper.decrypt,
-      set: EncryptionHelper.encrypt,
     },
   },
   {

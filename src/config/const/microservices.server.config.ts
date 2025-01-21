@@ -14,8 +14,5 @@ export const MicroservicesServerConfig: GrpcOptions = {
     onLoadPackageDefinition: (pkg, server) => {
       new ReflectionService(pkg).addToServer(server);
     },
-    channelOptions: {
-      'grpc.default_compression_algorithm': 2, // 2 untuk GZIP
-    },
   },
 };

@@ -2,9 +2,11 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { AccountCredentialModel } from '../../../schema/account.credential.schema';
-import { IAccountCredential } from '../../../model/database/account.credential.model';
 import { AccountModel } from '../../../schema/account.schema';
 import { IAccount } from '../../../model/database/account.model';
+import { Metadata, ServerUnaryCall, status } from '@grpc/grpc-js';
+import { IAccountCredential, AccountCredentialCreateResponse, AccountCredentialReadResponse, AccountCredentialReadRequest, AccountCredentialAuthRequest, AccountCredentialAuthResponse } from '../../../model/proto/credential/account.credential.grpc';
+import { Status } from '@grpc/grpc-js/build/src/constants';
 
 @Injectable()
 export class CredentialService implements OnModuleInit, OnModuleDestroy {
@@ -88,31 +90,40 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
     await this.AccountChanges.close();
   }
 
-  async Create(payload: { header?: any; body?: any; query?: any }): Promise<any> {
+  async Create(payload: { data: IAccountCredential; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountCredentialCreateResponse> {
     return new Promise((resolve, reject) => {
-      if (payload.body === undefined) return reject({ status: false, code: HttpStatus.BAD_REQUEST, msg: `Body Request Is Empty` });
-      const model = new this.credential(payload.body);
+      const model = new this.credential(payload.data);
       return model
         .save()
         .then((result) => {
-          return resolve({ status: true, code: HttpStatus.OK, msg: `Successfully Create Data`, data: result });
+          return resolve({ status: true, code: status.OK, msg: `Successfully Create Data`, data: result });
         })
         .catch((error) => {
-          return reject({ status: false, code: HttpStatus.SERVICE_UNAVAILABLE, msg: `Failed To Insert To Database`, error: error });
+          return reject({ status: false, code: status.ABORTED, msg: `Failed To Insert To Database`, error: error });
         });
     });
   }
-  async Read(): Promise<any> {
+
+  async Read(payload: { data: AccountCredentialReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountCredentialReadResponse> {
     return new Promise(async (resolve, reject) => {
       return this.credential
         .find()
+        .select('-password')
         .populate('preference')
         .populate('parent')
         .exec()
         .then((result) => {
+          if (result.length < 1)
+            return reject({
+              status: false,
+              code: Status.NOT_FOUND,
+              msg: `Data Not Found`,
+              error: `not found`,
+            });
+
           return resolve({
             status: true,
-            code: HttpStatus.OK,
+            code: Status.OK,
             msg: `Successfully Get Data`,
             data: result,
           });
@@ -120,7 +131,45 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
         .catch((error) => {
           return reject({
             status: false,
-            code: HttpStatus.SERVICE_UNAVAILABLE,
+            code: Status.ABORTED,
+            msg: `Failed Get Account Data`,
+            error: error,
+          });
+        });
+    });
+  }
+
+  async Auth(payload: { data: AccountCredentialAuthRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountCredentialAuthResponse> {
+    return new Promise(async (resolve, reject) => {
+      return this.credential
+        .findOne({
+          $and: [{ $or: [{ username: payload.data.username }, { email: payload.data.username }] }, { password: payload.data.password }],
+        })
+        .select('-password')
+        .populate('preference')
+        .populate('parent')
+        .exec()
+        .then((result) => {
+          if (result === null || result === undefined)
+            return reject({
+              status: false,
+              code: Status.UNAUTHENTICATED,
+              msg: `Account Tidak Ada`,
+              error: `Account not Exists`,
+            });
+
+          return resolve({
+            status: true,
+            code: Status.OK,
+            msg: `Successfully Get Data`,
+            data: result,
+          });
+        })
+        .catch((error) => {
+          this.logger.error(error);
+          return reject({
+            status: false,
+            code: Status.ABORTED,
             msg: `Failed Get Account Data`,
             error: error,
           });

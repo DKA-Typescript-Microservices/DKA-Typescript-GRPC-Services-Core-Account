@@ -4,8 +4,9 @@ import mongoose, { Model } from 'mongoose';
 import { AccountInfoModel } from '../../../schema/account.info.schema';
 import { IAccount } from '../../../model/database/account.model';
 import { AccountInfoReadResponse, AccountInfoCreateResponse, AccountInfoReadRequest, IAccountInfo } from '../../../model/proto/info/account.info.gprc';
-import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
+import { Metadata, ServerUnaryCall, status } from '@grpc/grpc-js';
 import { AccountModel } from '../../../schema/account.schema';
+import { Status } from '@grpc/grpc-js/build/src/constants';
 
 @Injectable()
 export class InfoService implements OnModuleInit, OnModuleDestroy {
@@ -96,7 +97,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
         .then((result) => {
           return resolve({
             status: true,
-            code: HttpStatus.OK,
+            code: status.OK,
             msg: `Successfully Create Data`,
             data: result,
           });
@@ -104,7 +105,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
         .catch((error) => {
           return reject({
             status: false,
-            code: HttpStatus.SERVICE_UNAVAILABLE,
+            code: status.ABORTED,
             msg: `Failed To Insert To Database`,
             error: error,
           });
@@ -120,9 +121,17 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
         .populate('parent')
         .exec()
         .then((result) => {
+          if (result.length < 1)
+            return reject({
+              status: false,
+              code: Status.NOT_FOUND,
+              msg: `Data Not Found`,
+              error: `not found`,
+            });
+
           return resolve({
             status: true,
-            code: HttpStatus.OK,
+            code: Status.OK,
             msg: `Successfully Get Data`,
             data: result,
           });
@@ -131,7 +140,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(error);
           return reject({
             status: false,
-            code: HttpStatus.SERVICE_UNAVAILABLE,
+            code: Status.ABORTED,
             msg: `Failed Get Account Data`,
             error: error,
           });

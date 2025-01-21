@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import { IAccountInfo } from '../model/database/account.info.model';
-import { EncryptionHelper } from '../security/encryption.helper';
 import { ModelConfig } from '../config/const/model.config';
 
 export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
@@ -32,13 +31,9 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
     firstName: {
       type: mongoose.Schema.Types.String,
       required: true,
-      get: EncryptionHelper.decrypt,
-      set: EncryptionHelper.encrypt,
     },
     lastName: {
       type: mongoose.Schema.Types.String,
-      get: EncryptionHelper.decrypt,
-      set: EncryptionHelper.encrypt,
     },
   },
   {
