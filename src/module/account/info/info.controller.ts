@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Header,
-  Post,
-  Response,
-  Headers,
-  Body,
-  Query,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Header, Post, Response, Headers, Body, Query, Logger } from '@nestjs/common';
 import { InfoService } from './info.service';
 
 @Controller()
@@ -17,12 +7,7 @@ export class InfoController {
   constructor(private readonly infoService: InfoService) {}
 
   @Post()
-  async Create(
-    @Response() response,
-    @Headers() header,
-    @Body() body,
-    @Query() query,
-  ) {
+  async Create(@Response() response, @Headers() header, @Body() body, @Query() query) {
     return this.infoService
       .Create({
         header,

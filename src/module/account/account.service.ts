@@ -10,11 +10,7 @@ export class AccountService {
   @InjectModel(AccountModel.modelName)
   private readonly account: Model<IAccount>;
 
-  async Create(payload: {
-    header?: any;
-    body?: any;
-    query?: any;
-  }): Promise<any> {
+  async Create(payload: { header?: any; body?: any; query?: any }): Promise<any> {
     return new Promise((resolve, reject) => {
       if (payload.body === undefined)
         return reject({

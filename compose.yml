@@ -32,6 +32,8 @@ services:
     image: yovanggaanandhika/mongo:12-slim
     container_name: dka-services-core-account-mongo
     hostname: dka-services-core-account-mongo
+    environment:
+      DKA_REPL_ENABLED: true
     deploy:
       resources:
         reservations:
@@ -52,7 +54,6 @@ services:
     networks:
       - default
 
-
 volumes:
   mongo:
     driver: local
@@ -60,4 +61,3 @@ volumes:
 networks:
   default:
     driver: bridge
-

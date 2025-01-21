@@ -54,9 +54,6 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
   },
 );
 
-export const AccountCredentialModel = mongoose.model(
-  'account-credential',
-  AccountCredentialSchema,
-);
+export const AccountCredentialModel = mongoose.model('account-credential', AccountCredentialSchema);
 
 export default AccountCredentialSchema;

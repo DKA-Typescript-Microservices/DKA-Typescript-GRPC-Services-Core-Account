@@ -2,9 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { InfoService } from './info.service';
 import { DatabaseConnectionConfig } from '../../../config/database.connection.config';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountInfoSchema, {
-  AccountInfoModel,
-} from '../../../schema/account.info.schema';
+import AccountInfoSchema, { AccountInfoModel } from '../../../schema/account.info.schema';
 
 describe('InfoService', () => {
   let service: InfoService;

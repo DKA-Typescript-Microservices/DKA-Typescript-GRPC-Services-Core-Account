@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Logger,
-  Post,
-  Query,
-  Response,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Logger, Post, Query, Response } from '@nestjs/common';
 import { CredentialService } from './credential.service';
 
 @Controller()
@@ -16,12 +7,7 @@ export class CredentialController {
   constructor(private readonly credentialService: CredentialService) {}
 
   @Post()
-  async Create(
-    @Response() response,
-    @Headers() header,
-    @Body() body,
-    @Query() query,
-  ) {
+  async Create(@Response() response, @Headers() header, @Body() body, @Query() query) {
     return this.credentialService
       .Create({
         header,

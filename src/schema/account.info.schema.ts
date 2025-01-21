@@ -45,9 +45,6 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   },
 );
 
-export const AccountInfoModel = mongoose.model(
-  'account-info',
-  AccountInfoSchema,
-);
+export const AccountInfoModel = mongoose.model('account-info', AccountInfoSchema);
 
 export default AccountInfoSchema;

@@ -8,10 +8,7 @@ import * as process from 'node:process';
   return NestFactory.create(ModuleModule, {})
     .then(async (app) => {
       return app
-        .listen(
-          Number(process.env.DKA_SERVER_PORT || 80),
-          process.env.DKA_SERVER_HOST || '0.0.0.0',
-        )
+        .listen(Number(process.env.DKA_SERVER_PORT || 80), process.env.DKA_SERVER_HOST || '0.0.0.0')
         .then((result) => {
           logger.verbose(JSON.stringify(result));
         })

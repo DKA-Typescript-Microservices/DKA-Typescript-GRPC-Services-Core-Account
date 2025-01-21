@@ -3,9 +3,7 @@ import { InfoController } from './info.controller';
 import { InfoService } from './info.service';
 import { DatabaseConnectionConfig } from '../../../config/database.connection.config';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountInfoSchema, {
-  AccountInfoModel,
-} from '../../../schema/account.info.schema';
+import AccountInfoSchema, { AccountInfoModel } from '../../../schema/account.info.schema';
 
 describe('InfoController', () => {
   let controller: InfoController;
