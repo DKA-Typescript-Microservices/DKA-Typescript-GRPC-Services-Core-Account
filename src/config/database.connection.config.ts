@@ -7,4 +7,5 @@ export const DatabaseConnectionConfig: DynamicModule = MongooseModule.forRoot(`m
     password: `${process.env.DKA_MONGO_PASSWORD || '123456789'}`,
   },
   dbName: `${process.env.DKA_MONGO_NAME || 'dka-account'}`,
+  directConnection: true,
 });

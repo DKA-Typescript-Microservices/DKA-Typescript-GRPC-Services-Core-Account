@@ -2,9 +2,10 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { AccountInfoModel } from '../../../schema/account.info.schema';
-import { IAccountInfo } from '../../../model/account.info.model';
+import { IAccount } from '../../../model/database/account.model';
+import { AccountInfoReadResponse, AccountInfoCreateResponse, AccountInfoReadRequest, IAccountInfo } from '../../../model/proto/info/account.info.gprc';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { AccountModel } from '../../../schema/account.schema';
-import { IAccount } from '../../../model/account.model';
 
 @Injectable()
 export class InfoService implements OnModuleInit, OnModuleDestroy {
@@ -30,40 +31,54 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
       },
     ]);
     this.AccountChanges.on('change', async (change) => {
+      const session = await this.account.startSession();
+      session.startTransaction();
       // Handle specific change types
       switch (change.operationType) {
         case 'insert':
-          await this.info
-            .updateOne({ _id: change.fullDocument.info }, { $set: { parent: change.fullDocument._id } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
+          await Promise.all([
+            this.info.updateOne({ _id: change.fullDocument.info }, { $set: { parent: change.fullDocument._id } }, { session }),
+            this.account.findOneAndUpdate(
+              {
+                $and: [{ _id: { $ne: change.fullDocument._id } }, { info: change.fullDocument.info }],
+              },
+              { $unset: { info: '' } },
+              { session },
+            ),
+          ])
+            .then(async () => {
+              await session.commitTransaction();
             })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
+            .catch(async () => {
+              await session.abortTransaction();
+            })
+            .finally(async () => {
+              await session.endSession();
             });
           break;
         case 'update':
-          await this.info
-            .updateOne({ _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.info) }, { $set: { parent: change.documentKey._id } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
+          await Promise.all([
+            this.info.updateOne({ _id: new mongoose.Types.ObjectId(`${change.updateDescription?.updatedFields?.info}`) }, { $set: { parent: change.documentKey._id } }, { session }),
+            this.account.findOneAndUpdate(
+              {
+                $and: [{ _id: { $ne: change.documentKey._id } }, { info: new mongoose.Types.ObjectId(`${change.updateDescription?.updatedFields?.info}`) }],
+              },
+              { $unset: { info: '' } },
+              { session },
+            ),
+          ])
+            .then(async () => {
+              await session.commitTransaction();
             })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
+            .catch(async () => {
+              await session.abortTransaction();
+            })
+            .finally(async () => {
+              await session.endSession();
             });
           break;
         case 'delete':
-          await this.info
-            .updateOne({ parent: change.documentKey._id }, { $unset: { parent: '' } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
-            })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
-            });
+          await this.info.updateOne({ parent: change.documentKey._id }, { $unset: { parent: '' } });
           break;
       }
     });
@@ -73,15 +88,9 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
     await this.AccountChanges.close();
   }
 
-  async Create(payload: { header?: any; body?: any; query?: any }): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (payload.body === undefined)
-        return reject({
-          status: false,
-          code: HttpStatus.BAD_REQUEST,
-          msg: `Body Request Is Empty`,
-        });
-      const model = new this.info(payload.body);
+  async Create(payload: { data: IAccountInfo; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountInfoCreateResponse> {
+    return new Promise(async (resolve, reject) => {
+      const model = new this.info(payload.data);
       return model
         .save()
         .then((result) => {
@@ -102,20 +111,13 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
         });
     });
   }
-  async Read(): Promise<any> {
+
+  async Read(payload: { data: AccountInfoReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountInfoReadResponse> {
     return new Promise(async (resolve, reject) => {
       return this.info
         .find()
-        .populate({
-          path: 'preference',
-          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
-          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
-        })
-        .populate({
-          path: 'parent',
-          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
-          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
-        })
+        .populate('preference')
+        .populate('parent')
         .exec()
         .then((result) => {
           return resolve({
@@ -126,6 +128,7 @@ export class InfoService implements OnModuleInit, OnModuleDestroy {
           });
         })
         .catch((error) => {
+          this.logger.error(error);
           return reject({
             status: false,
             code: HttpStatus.SERVICE_UNAVAILABLE,

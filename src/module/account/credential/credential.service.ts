@@ -2,9 +2,9 @@ import { HttpStatus, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { AccountCredentialModel } from '../../../schema/account.credential.schema';
-import { IAccountCredential } from '../../../model/account.credential.model';
+import { IAccountCredential } from '../../../model/database/account.credential.model';
 import { AccountModel } from '../../../schema/account.schema';
-import { IAccount } from '../../../model/account.model';
+import { IAccount } from '../../../model/database/account.model';
 
 @Injectable()
 export class CredentialService implements OnModuleInit, OnModuleDestroy {
@@ -31,40 +31,54 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
     ]);
 
     this.AccountChanges.on('change', async (change) => {
+      const session = await this.account.startSession();
+      session.startTransaction();
       // Handle specific change types
       switch (change.operationType) {
         case 'insert':
-          await this.credential
-            .updateOne({ _id: change.fullDocument.credential }, { $set: { parent: change.fullDocument._id } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
+          await Promise.all([
+            this.credential.updateOne({ _id: change.fullDocument.credential }, { $set: { parent: change.fullDocument._id } }, { session }),
+            this.account.findOneAndUpdate(
+              {
+                $and: [{ _id: { $ne: change.fullDocument._id } }, { credential: change.fullDocument.credential }],
+              },
+              { $unset: { credential: '' } },
+              { session },
+            ),
+          ])
+            .then(async () => {
+              await session.commitTransaction();
             })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
+            .catch(async () => {
+              await session.abortTransaction();
+            })
+            .finally(async () => {
+              await session.endSession();
             });
           break;
         case 'update':
-          await this.credential
-            .updateOne({ _id: new mongoose.Types.ObjectId(change.updateDescription?.updatedFields?.credential) }, { $set: { parent: change.documentKey._id } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
+          await Promise.all([
+            this.credential.updateOne({ _id: new mongoose.Types.ObjectId(`${change.updateDescription?.updatedFields?.credential}`) }, { $set: { parent: change.documentKey._id } }, { session }),
+            this.account.findOneAndUpdate(
+              {
+                $and: [{ _id: { $ne: change.documentKey._id } }, { credential: new mongoose.Types.ObjectId(`${change.updateDescription?.updatedFields?.credential}`) }],
+              },
+              { $unset: { credential: '' } },
+              { session },
+            ),
+          ])
+            .then(async () => {
+              await session.commitTransaction();
             })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
+            .catch(async () => {
+              await session.abortTransaction();
+            })
+            .finally(async () => {
+              await session.endSession();
             });
           break;
         case 'delete':
-          await this.credential
-            .updateOne({ parent: change.documentKey._id }, { $unset: { parent: '' } })
-            .exec()
-            .then((result) => {
-              this.logger.log(JSON.stringify(result));
-            })
-            .catch((error) => {
-              this.logger.error(JSON.stringify(error));
-            });
+          await this.credential.updateOne({ parent: change.documentKey._id }, { $unset: { parent: '' } });
           break;
       }
     });
@@ -92,16 +106,8 @@ export class CredentialService implements OnModuleInit, OnModuleDestroy {
     return new Promise(async (resolve, reject) => {
       return this.credential
         .find()
-        .populate({
-          path: 'preference',
-          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
-          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
-        })
-        .populate({
-          path: 'parent',
-          match: {}, // Tidak ada filter khusus, biarkan tetap bekerja meskipun data tidak ada
-          options: { lean: true }, // Opsional, jika ingin mendapatkan object biasa (plain object)
-        })
+        .populate('preference')
+        .populate('parent')
         .exec()
         .then((result) => {
           return resolve({

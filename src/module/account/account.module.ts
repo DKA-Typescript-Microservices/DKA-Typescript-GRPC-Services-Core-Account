@@ -15,10 +15,7 @@ import { CredentialModule } from './credential/credential.module';
     MongooseModule.forFeature([
       { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },
       { schema: AccountInfoSchema, name: AccountInfoModel.modelName },
-      {
-        schema: AccountSchema,
-        name: AccountModel.modelName,
-      },
+      { schema: AccountSchema, name: AccountModel.modelName },
     ]),
     InfoModule,
     CredentialModule,

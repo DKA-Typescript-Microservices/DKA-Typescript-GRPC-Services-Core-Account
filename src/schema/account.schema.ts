@@ -1,7 +1,5 @@
-import { IAccount } from '../model/account.model';
+import { IAccount } from '../model/database/account.model';
 import mongoose from 'mongoose';
-import { AccountInfoModel } from './account.info.schema';
-import { AccountCredentialModel } from './account.credential.schema';
 import { ModelConfig } from '../config/model.config';
 
 export const AccountSchema = new mongoose.Schema<IAccount>(

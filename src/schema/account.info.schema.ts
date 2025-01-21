@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IAccountInfo } from '../model/account.info.model';
+import { IAccountInfo } from '../model/database/account.info.model';
 import { EncryptionHelper } from '../security/encryption.helper';
 import { ModelConfig } from '../config/model.config';
 
@@ -29,13 +29,13 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
         message: 'reference account is not exists',
       },
     },
-    first_name: {
+    firstName: {
       type: mongoose.Schema.Types.String,
       required: true,
       get: EncryptionHelper.decrypt,
       set: EncryptionHelper.encrypt,
     },
-    last_name: {
+    lastName: {
       type: mongoose.Schema.Types.String,
       get: EncryptionHelper.decrypt,
       set: EncryptionHelper.encrypt,
