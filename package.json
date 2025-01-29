@@ -11,7 +11,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "prebuild": "protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=. ./src/model/proto/**/*.proto",
+    "prebuild": "protoc --plugin='protoc-gen-ts=$(which protoc-gen-ts)' --proto_path=src/model/proto --ts_proto_out=src/model/proto src/model/**/*.proto",
     "postbuild": "javascript-obfuscator dist --output dist --config javascript-obfuscator.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -34,6 +34,8 @@
     "@nestjs/platform-express": "^10.0.0",
     "bcrypt": "^5.1.1",
     "javascript-obfuscator": "^4.1.1",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.5.46",
     "mongoose": "^8.9.5",
     "nestjs-grpc-reflection": "^0.2.2",
     "reflect-metadata": "^0.2.0",

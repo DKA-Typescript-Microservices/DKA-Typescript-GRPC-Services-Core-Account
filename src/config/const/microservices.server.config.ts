@@ -7,7 +7,7 @@ import { ServerCredentials } from '@grpc/grpc-js';
 export const MicroservicesServerConfig: GrpcOptions = {
   transport: Transport.GRPC,
   options: {
-    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
+    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 3000)}`,
     package: ProtoArrayConfig.package,
     protoPath: ProtoArrayConfig.protoPath,
     credentials: ServerCredentials.createInsecure(),

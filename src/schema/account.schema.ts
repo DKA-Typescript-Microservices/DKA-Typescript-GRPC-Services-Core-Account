@@ -21,9 +21,12 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       ref: ModelConfig.accountInfo,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(ModelConfig.accountInfo).exists({
-            _id: value,
-          }));
+          const session = this.$session(); // Ambil session aktif
+          const query = this.model(ModelConfig.accountInfo).exists({ _id: value });
+          if (session) {
+            query.session(session); // Teruskan session ke query
+          }
+          return !!(await query);
         },
         message: 'info account ID is not exists',
       },
@@ -34,9 +37,12 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       required: true,
       validate: {
         validator: async function (value) {
-          return !!(await this.model(ModelConfig.accountCredential).exists({
-            _id: value,
-          }));
+          const session = this.$session(); // Ambil session aktif
+          const query = this.model(ModelConfig.accountCredential).exists({ _id: value });
+          if (session) {
+            query.session(session); // Teruskan session ke query
+          }
+          return !!(await query);
         },
         message: 'credential account ID is not exists',
       },
@@ -55,6 +61,19 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     },
   },
 );
+
+AccountSchema.pre('createCollection', async (next) => {
+  AccountSchema.index({ info: -1, credential: -1 });
+  AccountSchema.index({ info: 1, credential: 1 });
+  AccountSchema.index({ info: 'text', credential: 'text' });
+  AccountSchema.index({ info: -1 });
+  AccountSchema.index({ credential: -1 });
+  AccountSchema.index({ info: 1 });
+  AccountSchema.index({ credential: 1 });
+  AccountSchema.index({ info: 'text' });
+  AccountSchema.index({ credential: 'text' });
+  next();
+});
 
 export const AccountModel = mongoose.model(ModelConfig.account, AccountSchema);
 

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package account;
+
+import "info/account.info.grpc.proto";
+import "credential/account.credential.grpc.proto";
+
+service Account {
+  rpc Create(AccountCreateRequest) returns (AccountCreateResponse);
+  rpc ReadAll(AccountReadRequest) returns (AccountReadResponse);
+  rpc ReadAllStream(AccountReadRequest) returns (stream IAccount);
+  rpc Auth(AccountAuthRequest) returns (AccountAuthResponse);
+}
+
+//##################################################################################
+message IAccount {
+  optional string id = 1;
+  optional string preference = 2;
+  optional account.credential.IAccountCredential credential = 3;
+  optional account.info.IAccountInfo info = 4;
+}
+//##################################################################################
+//##################################################################################
+message AccountAuthRequest {
+  string username = 1;
+  string password = 2;
+}
+message AccountAuthResponse {
+  bool status = 1;
+  int64 code = 2;
+  string msg = 3;
+  optional IAccount data = 4;
+}
+//##################################################################################
+message AccountCreateResponseData {
+  string info = 1;
+  string credential = 2;
+}
+
+message AccountCreateResponse {
+  bool status = 1;
+  int64 code = 2;
+  string msg = 3;
+  optional AccountCreateResponseData data = 4;
+}
+
+message AccountCreateRequest {
+  account.credential.IAccountCredential credential = 1;
+  account.info.IAccountInfo info = 2;
+}
+//##################################################################################
+message AccountReadResponse {
+  bool status = 1;
+  int64 code = 2;
+  string msg = 3;
+  repeated IAccount data = 4;
+}
+
+message AccountReadRequest {
+
+}
+//##################################################################################
+
+
+
