@@ -6,10 +6,11 @@ import { AccountInfoModel } from '../../schema/account.info.schema';
 import { IAccountInfo } from '../../model/database/account.info.model';
 import { AccountCredentialModel } from '../../schema/account.credential.schema';
 import { IAccountCredential } from '../../model/database/account.credential.model';
-import { Metadata, ServerUnaryCall, ServerWritableStream, status } from '@grpc/grpc-js';
+import { Metadata, ServerDuplexStream, ServerUnaryCall, ServerWritableStream, status } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
+import * as moment from 'moment-timezone';
 import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account.grpc';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -94,7 +95,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountReadResponse> {
+  async ReadAll(_: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
       return this.account
         .find()
@@ -130,57 +131,58 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Promise<Observable<IAccount>> {
-    return new Observable((subscriber) => {
-      const stream = this.account.find().populate('info', '-_id -parent').populate('credential', '-_id -password -parent').allowDiskUse(true).cursor();
+  ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Observable<IAccount> {
+    /** Declaration Function **/
+    const stream = this.account.find().populate('info', '-_id -parent').populate('credential', '-_id -password -parent').allowDiskUse(true).lean().cursor().addCursorFlag('noCursorTimeout', true);
+    const metaData = new Metadata();
+    const startTime = moment(moment.now());
 
-      /**
-       * Mendengarkan Data Selanjutnya
-       */
-      stream.on('data', (doc) => {
-        subscriber.next(doc);
-      });
+    const subject = new Subject<IAccount>();
 
-      /**
-       * Jika Stream Ditutup Maka
-       * Tutup Koneksi Stream
-       * dan sampaikan pada Observable Bahwa Selesai
-       */
-      payload.call.on('close', () => {
-        stream.close();
-        subscriber.complete();
-      });
-
-      /**
-       * Jika Stream Selesai
-       */
-      stream.on('end', () => {
-        /** Tutup Stream Cursor **/
-        stream.close();
-        /** Kirim meta Data Setelah Selesai **/
-        const finalMetadata = new Metadata();
-        finalMetadata.set('final-header', 'stream-complete');
-        payload.call.end(finalMetadata);
-        /** Sampaikankan kepada RXJS bahwa Observable Telah Selesai **/
-        subscriber.complete();
-      });
-
-      /**
-       * Jika Stream error
-       * Tutup Stream Cursor dan munculkan error
-       */
-      stream.on('error', (err) => {
-        stream.close();
-        subscriber.error(err);
-      });
-
-      /**
-       * Handle unsubscribe agar tidak ada memory leak jika client disconnect
-       */
-      return () => {
-        stream.close();
-      };
+    payload.call.on('close', async () => {
+      if (payload.call.cancelled) {
+        subject.complete();
+      }
+      if (!stream.closed) await stream.close();
     });
+
+    stream.on('data', (doc) => {
+      if (!payload.call.cancelled && !payload.call.closed) {
+        subject.next(doc);
+      } else {
+        stream.destroy(); // Hancurkan cursor biar ga kepake lagi
+      }
+    });
+
+    /**
+     * Jika stream selesai secara alami
+     */
+    stream.on('end', async () => {
+      if (!stream.closed) {
+        const endTime = moment(moment.now());
+        const processingTime = moment.duration(endTime.diff(startTime));
+        // Kirim metadata ke client sebelum stream ditutup
+        metaData.set('x-time-started', startTime.toISOString(true));
+        metaData.set('x-time-finished', endTime.toISOString(true));
+        metaData.set('x-time-processing', `${processingTime.hours()} h, ${processingTime.minutes()} m, ${processingTime.seconds()} s, ${processingTime.milliseconds()} ms`);
+
+        payload.call.end(metaData);
+        subject.complete();
+        if (!stream.closed) await stream.close();
+      }
+    });
+
+    /**
+     * Jika terjadi error pada stream
+     */
+    stream.on('error', async (err) => {
+      this.logger.log('Stream error:', err);
+      subject.error(err);
+      subject.complete();
+      await stream.close();
+    });
+
+    return subject.asObservable();
   }
 
   async Auth(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthResponse> {
