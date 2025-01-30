@@ -9,7 +9,7 @@ import { IAccountCredential } from '../../model/database/account.credential.mode
 import { Metadata, ServerDuplexStream, ServerUnaryCall, ServerWritableStream, status } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import * as moment from 'moment-timezone';
-import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account.grpc';
+import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account/account.grpc';
 import { Observable, Subject } from 'rxjs';
 
 @Injectable()

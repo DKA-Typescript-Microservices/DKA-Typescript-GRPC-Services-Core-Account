@@ -11,7 +11,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "prebuild": "protoc --plugin='protoc-gen-ts=$(which protoc-gen-ts)' --ts_proto_opt=rpc=true,binary=true --proto_path=src/model/proto --ts_proto_out=src/model/proto src/model/**/*.proto",
+    "prebuild": "protoc --plugin='protoc-gen-ts=$(which protoc-gen-ts)' --ts_proto_opt=rpc=true,binary=true,metadata=true --proto_path=src/model/proto --ts_proto_out=src/model/proto src/model/proto/**/*.proto",
     "postbuild": "javascript-obfuscator dist --output dist --config javascript-obfuscator.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

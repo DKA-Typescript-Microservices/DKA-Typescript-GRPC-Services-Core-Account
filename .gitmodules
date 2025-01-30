@@ -1,0 +1,3 @@
+[submodule "src/model/proto"]
+	path = src/model/proto
+	url = https://github.com/DKA-Typescript-Microservices/DKAGprcMicroservicesProto.git
