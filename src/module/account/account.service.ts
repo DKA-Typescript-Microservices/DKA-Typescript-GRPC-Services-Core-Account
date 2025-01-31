@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { AccountModel } from '../../schema/account.schema';
-import mongoose, { Connection, Model } from 'mongoose';
+import mongoose, { Connection, Model, Query } from 'mongoose';
 import { AccountInfoModel } from '../../schema/account.info.schema';
 import { IAccountInfo } from '../../model/database/account.info.model';
 import { AccountCredentialModel } from '../../schema/account.credential.schema';
@@ -11,6 +11,7 @@ import { Status } from '@grpc/grpc-js/build/src/constants';
 import * as moment from 'moment-timezone';
 import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account/account.grpc';
 import { Observable, Subject } from 'rxjs';
+import { ModelConfig } from '../../config/const/model.config';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -49,7 +50,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .save({ session })
             .then(async (finalResult: any) => {
               return Promise.all([this.info.updateOne({ _id: info.id }, { parent: finalResult._id }, { session }), this.credential.updateOne({ _id: credential.id }, { parent: finalResult._id }, { session })])
-                .then(async (_) => {
+                .then(async () => {
                   await session.commitTransaction();
                   return resolve({
                     status: true,
@@ -95,13 +96,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async ReadAll(_: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountReadResponse> {
+  async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
-      return this.account
-        .find()
-        .populate('info', '-_id -parent')
-        .populate('credential', '-_id -password -parent')
-        .allowDiskUse(true)
+      const query = this.account.find({}).populate('info', '-_id -parent').populate('credential', '-_id -password -parent');
+      if (payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
+      if (payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
+      return query
         .exec()
         .then((result) => {
           if (result.length < 1)
@@ -133,7 +133,52 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Observable<IAccount> {
     /** Declaration Function **/
-    const stream = this.account.find().populate('info', '-_id -parent').populate('credential', '-_id -password -parent').allowDiskUse(true).lean().cursor().addCursorFlag('noCursorTimeout', true);
+    const query = this.account.aggregate([
+      {
+        $lookup: {
+          from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
+          localField: 'info',
+          foreignField: '_id',
+          as: 'info',
+        },
+      },
+      {
+        $unwind: {
+          path: '$info',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          'info._id': 0,
+          'info.parent': 0,
+        },
+      },
+      {
+        $lookup: {
+          from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
+          localField: 'credential',
+          foreignField: '_id',
+          as: 'credential',
+        },
+      },
+      {
+        $unwind: {
+          path: '$credential',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          'credential._id': 0,
+          'credential.password': 0,
+          'credential.parent': 0,
+        },
+      },
+    ]);
+    if (payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
+    if (payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
+    const stream = query.cursor().addCursorFlag('noCursorTimeout', true);
     const metaData = new Metadata();
     const startTime = moment(moment.now());
 
@@ -147,11 +192,10 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
 
     stream.on('data', (doc) => {
-      if (!payload.call.cancelled && !payload.call.closed) {
-        subject.next(doc);
-      } else {
-        stream.destroy(); // Hancurkan cursor biar ga kepake lagi
+      if (payload.call.cancelled || payload.call.closed) {
+        if (!stream.destroyed) return stream.destroy();
       }
+      subject.next(doc);
     });
 
     /**
@@ -178,8 +222,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     stream.on('error', async (err) => {
       this.logger.log('Stream error:', err);
       subject.error(err);
-      subject.complete();
-      await stream.close();
+      if (!stream.closed) await stream.close();
     });
 
     return subject.asObservable();
