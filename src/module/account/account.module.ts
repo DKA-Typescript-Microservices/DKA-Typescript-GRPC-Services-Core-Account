@@ -16,6 +16,7 @@ import AccountCredentialSchema, { AccountCredentialModel } from '../../schema/ac
       { schema: AccountSchema, name: AccountModel.modelName },
     ]),
   ],
+
   controllers: [AccountController],
   providers: [AccountService],
 })

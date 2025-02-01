@@ -3,7 +3,6 @@
 /node_modules
 /build
 yarn.lock
-
 # Logs
 logs
 *.log
@@ -15,7 +14,7 @@ lerna-debug.log*
 /**/*.grpc.ts
 # OS
 .DS_Store
-
+/**/ssl/**/*
 # Tests
 /coverage
 /.nyc_output

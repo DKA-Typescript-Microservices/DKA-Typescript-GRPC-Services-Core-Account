@@ -1,0 +1,14 @@
+.idea
+.git
+yarn.lock
+build
+node_modules
+dist
+.gitmodules
+.gitignore
+Makefile
+.prettierrc
+.eslintrc.js
+compose.yml
+test
+Dockerfile

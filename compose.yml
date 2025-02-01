@@ -8,8 +8,8 @@ services:
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
     ports:
-      - target: 3000
-        published: 80
+      - target: 50051
+        published: 50051
         protocol: tcp
         host_ip: 0.0.0.0
     volumes:
@@ -22,6 +22,7 @@ services:
           memory: 1028M
         limits:
           memory: 2048M
+    command: yarn run start:dev
     networks:
       - default
 

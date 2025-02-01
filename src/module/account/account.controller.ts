@@ -11,7 +11,6 @@ export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @GrpcMethod('Account', 'Create')
-  @UseInterceptors(RequestGrpcMiddleware)
   async Create(data: AccountCreateRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountCreateResponse> {
     return this.accountService
       .Create({
@@ -22,11 +21,11 @@ export class AccountController {
       .then((result) => {
         return result;
       })
-      .catch((error) => {
-        this.logger.error(error);
+      .catch((reason) => {
         throw new RpcException({
-          code: error.code,
-          message: error.msg,
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
         });
       });
   }
@@ -42,11 +41,11 @@ export class AccountController {
       .then((result) => {
         return result;
       })
-      .catch((error) => {
+      .catch((reason) => {
         throw new RpcException({
-          code: error.code,
-          message: error.msg,
-          additionalInfo: error.error,
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
         });
       });
   }
@@ -73,11 +72,11 @@ export class AccountController {
       .then((result) => {
         return result;
       })
-      .catch((error) => {
+      .catch((reason) => {
         throw new RpcException({
-          code: error.code,
-          message: error.msg,
-          additionalInfo: error.error,
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
         });
       });
   }
