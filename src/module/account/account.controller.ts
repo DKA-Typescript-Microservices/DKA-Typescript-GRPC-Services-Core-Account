@@ -32,9 +32,8 @@ export class AccountController {
   }
 
   @GrpcMethod('Account', 'ReadAll')
-  @UseInterceptors(RequestGrpcMiddleware)
-  async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountReadResponse> {
-    return this.accountService
+  async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
+    return await this.accountService
       .ReadAll({
         data,
         metadata,

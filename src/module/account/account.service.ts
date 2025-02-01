@@ -1,12 +1,12 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { AccountModel } from '../../schema/account.schema';
-import mongoose, { Connection, Model, Query } from 'mongoose';
+import mongoose, { Connection, Model } from 'mongoose';
 import { AccountInfoModel } from '../../schema/account.info.schema';
 import { IAccountInfo } from '../../model/database/account.info.model';
 import { AccountCredentialModel } from '../../schema/account.credential.schema';
 import { IAccountCredential } from '../../model/database/account.credential.model';
-import { Metadata, ServerDuplexStream, ServerUnaryCall, ServerWritableStream, status } from '@grpc/grpc-js';
+import { Metadata, ServerUnaryCall, ServerWritableStream, status } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import * as moment from 'moment-timezone';
 import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account/account.grpc';
@@ -96,11 +96,53 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountReadResponse> {
+  async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
-      const query = this.account.find({}).populate('info', '-_id -parent').populate('credential', '-_id -password -parent');
-      if (payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
-      if (payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
+      const query = this.account.aggregate([
+        {
+          $lookup: {
+            from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
+            localField: 'info',
+            foreignField: '_id',
+            as: 'info',
+          },
+        },
+        {
+          $unwind: {
+            path: '$info',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            'info._id': 0,
+            'info.parent': 0,
+          },
+        },
+        {
+          $lookup: {
+            from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
+            localField: 'credential',
+            foreignField: '_id',
+            as: 'credential',
+          },
+        },
+        {
+          $unwind: {
+            path: '$credential',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            'credential._id': 0,
+            'credential.password': 0,
+            'credential.parent': 0,
+          },
+        },
+      ]);
+      if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
+      if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
       return query
         .exec()
         .then((result) => {
@@ -117,6 +159,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             code: Status.OK,
             msg: `Successfully Get Data`,
             data: result,
+            metadata: {
+              count: result.length,
+            },
           });
         })
         .catch((error) => {
@@ -131,7 +176,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Observable<IAccount> {
+  async ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Promise<Observable<IAccount>> {
     /** Declaration Function **/
     const query = this.account.aggregate([
       {
@@ -176,8 +221,11 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         },
       },
     ]);
-    if (payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
-    if (payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
+
+    if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.allowDiskUse !== undefined) query.allowDiskUse(payload.data.options.allowDiskUse);
+    if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
+
+    query.exec().then((r) => this.logger.verbose(r.length));
     const stream = query.cursor().addCursorFlag('noCursorTimeout', true);
     const metaData = new Metadata();
     const startTime = moment(moment.now());
@@ -185,35 +233,32 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     const subject = new Subject<IAccount>();
 
     payload.call.on('close', async () => {
-      if (payload.call.cancelled) {
-        subject.complete();
-      }
       if (!stream.closed) await stream.close();
     });
 
-    stream.on('data', (doc) => {
-      if (payload.call.cancelled || payload.call.closed) {
-        if (!stream.destroyed) return stream.destroy();
-      }
-      subject.next(doc);
+    let num = 0;
+    stream.on('data', async (doc) => {
+      setTimeout(() => {
+        subject.next(doc);
+      }, 200);
+      this.logger.log(num);
+      num++;
     });
 
     /**
      * Jika stream selesai secara alami
      */
     stream.on('end', async () => {
-      if (!stream.closed) {
-        const endTime = moment(moment.now());
-        const processingTime = moment.duration(endTime.diff(startTime));
-        // Kirim metadata ke client sebelum stream ditutup
-        metaData.set('x-time-started', startTime.toISOString(true));
-        metaData.set('x-time-finished', endTime.toISOString(true));
-        metaData.set('x-time-processing', `${processingTime.hours()} h, ${processingTime.minutes()} m, ${processingTime.seconds()} s, ${processingTime.milliseconds()} ms`);
-
-        payload.call.end(metaData);
-        subject.complete();
-        if (!stream.closed) await stream.close();
-      }
+      this.logger.verbose('selesai');
+      const endTime = moment(moment.now());
+      const processingTime = moment.duration(endTime.diff(startTime));
+      // Kirim metadata ke client sebelum stream ditutup
+      metaData.set('x-time-started', startTime.toISOString(true));
+      metaData.set('x-time-finished', endTime.toISOString(true));
+      metaData.set('x-time-processing', `${processingTime.hours()} h, ${processingTime.minutes()} m, ${processingTime.seconds()} s, ${processingTime.milliseconds()} ms`);
+      subject.complete();
+      payload.call.end(metaData);
+      if (!stream.closed) await stream.close();
     });
 
     /**
