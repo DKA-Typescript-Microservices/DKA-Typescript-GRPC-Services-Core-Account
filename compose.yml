@@ -7,9 +7,10 @@ services:
     hostname: dka-services-core-account-app
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
+      DKA_SERVER_SECURE: true
     ports:
-      - target: 50051
-        published: 50051
+      - target: 443
+        published: 443
         protocol: tcp
         host_ip: 0.0.0.0
     volumes:
@@ -24,7 +25,7 @@ services:
           memory: 2048M
     command: yarn run start:dev
     networks:
-      - default
+      - dka-dev
 
   mongo:
     image: yovanggaanandhika/mongo:12-slim
@@ -50,12 +51,13 @@ services:
         source: mongo
         target: /data/db
     networks:
-      - default
+      - dka-dev
 
 volumes:
   mongo:
     driver: local
 
 networks:
-  default:
+  dka-dev:
     driver: bridge
+    external: true

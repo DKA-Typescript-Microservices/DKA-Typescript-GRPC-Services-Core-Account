@@ -3,7 +3,17 @@ import { AccountService } from './account.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware';
 import { Metadata, ServerUnaryCall, ServerWritableStream } from '@grpc/grpc-js';
-import { AccountAuthRequest, AccountAuthResponse, AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse, IAccount } from '../../model/proto/account/account.grpc';
+import {
+  AccountCreateRequest,
+  AccountCreateResponse,
+  AccountGetTokenRequest,
+  AccountGetTokenResponse,
+  AccountReadRequest,
+  AccountReadResponse,
+  AccountVerifyTokenRequest,
+  AccountVerifyTokenResponse,
+  IAccount,
+} from '../../model/proto/account/account.grpc';
 
 @Controller()
 export class AccountController {
@@ -60,11 +70,50 @@ export class AccountController {
     });
   }
 
-  @GrpcMethod('Account', 'Auth')
-  @UseInterceptors(RequestGrpcMiddleware)
-  async Auth(data: AccountAuthRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountAuthResponse> {
+  @GrpcMethod('Account', 'getToken')
+  async getToken(data: AccountGetTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountGetTokenResponse> {
     return this.accountService
-      .Auth({
+      .getToken({
+        data,
+        metadata,
+        call,
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((reason) => {
+        throw new RpcException({
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
+        });
+      });
+  }
+
+  @GrpcMethod('Account', 'verifyToken')
+  async verifyToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountVerifyTokenResponse> {
+    return this.accountService
+      .verifyToken({
+        data,
+        metadata,
+        call,
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((reason) => {
+        throw new RpcException({
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
+        });
+      });
+  }
+
+  @GrpcMethod('Account', 'refreshToken')
+  async refreshToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountGetTokenResponse> {
+    return this.accountService
+      .refreshToken({
         data,
         metadata,
         call,

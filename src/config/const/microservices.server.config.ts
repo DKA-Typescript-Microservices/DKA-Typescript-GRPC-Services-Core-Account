@@ -6,24 +6,30 @@ import { ServerCredentials } from '@grpc/grpc-js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+const isServiceSecure = Boolean(process.env.DKA_SERVER_SECURE) && process.env.DKA_SERVER_SECURE !== 'false';
+
 export const MicroservicesServerConfig: GrpcOptions = {
   transport: Transport.GRPC,
   options: {
-    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 50051)}`,
+    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || (isServiceSecure ? 443 : 80))}`,
     package: ProtoArrayConfig.package,
     protoPath: ProtoArrayConfig.protoPath,
-    credentials: ServerCredentials.createSsl(
-      fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/ca/ca.crt')),
-      [
-        {
-          cert_chain: fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/server.crt')),
-          private_key: fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/private.key')),
-        },
-      ],
-      true,
-    ),
+    credentials: isServiceSecure
+      ? ServerCredentials.createSsl(
+          fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/ca/ca.crt')),
+          [
+            {
+              cert_chain: fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/server.crt')),
+              private_key: fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/private.key')),
+            },
+          ],
+          true,
+        )
+      : ServerCredentials.createInsecure(),
     onLoadPackageDefinition: (pkg, server) => {
-      new ReflectionService(pkg).addToServer(server);
+      if (process.env.DKA_SERVER_REFLECTION === undefined || process.env.DKA_SERVER_REFLECTION === 'true') {
+        new ReflectionService(pkg).addToServer(server);
+      }
     },
   },
 };

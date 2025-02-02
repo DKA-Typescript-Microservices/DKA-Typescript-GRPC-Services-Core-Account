@@ -6,7 +6,5 @@ COPY . .
 # yarn install
 RUN yarn install && yarn run build
 # Remove Source Code
-RUN rm -rf src
-# Expose Port
-EXPOSE 50051
+RUN rm -rf src javascript-obfuscator.json nest-cli.json .dockerignore tsconfig**
 

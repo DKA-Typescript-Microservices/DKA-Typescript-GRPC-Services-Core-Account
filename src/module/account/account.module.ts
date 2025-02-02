@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import AccountSchema, { AccountModel } from '../../schema/account.schema';
 import AccountInfoSchema, { AccountInfoModel } from '../../schema/account.info.schema';
 import AccountCredentialSchema, { AccountCredentialModel } from '../../schema/account.credential.schema';
+import AccountTokenSchema, { AccountTokenModel } from '../../schema/account.token.schema';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import AccountCredentialSchema, { AccountCredentialModel } from '../../schema/ac
       { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },
       { schema: AccountInfoSchema, name: AccountInfoModel.modelName },
       { schema: AccountSchema, name: AccountModel.modelName },
+      { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
     ]),
   ],
 
