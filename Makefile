@@ -16,6 +16,14 @@ load-dev:
 unload-dev:
 	docker rm -f dka-services-${TAG_NAME}-app
 
+create-key:
+	openssl genpkey \
+	-algorithm RSA \
+	-out src/config/ssl/server/private.key \
+	-pkeyopt rsa_keygen_bits:8192
+
+create-csr:
+	openssl req -key src/config/ssl/server/private.key -new -out src/config/ssl/server/server.csr
 
 #Generated Proto
 proto:

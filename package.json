@@ -13,6 +13,9 @@
     "build": "nest build",
     "postbuild": "javascript-obfuscator dist --output dist --config javascript-obfuscator.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "server": "ts-node test/createServerCert.ts",
+    "client": "ts-node test/createClientCert.ts",
+    "ca": "ts-node test/createCACert.ts",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -46,6 +49,7 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
+    "@dkaframework/security": "^1.2.7",
     "@grpc/grpc-js": "^1.12.5",
     "@grpc/proto-loader": "^0.7.13",
     "@grpc/reflection": "^1.0.4",

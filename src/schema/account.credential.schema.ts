@@ -34,6 +34,12 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     email: {
       type: mongoose.Schema.Types.String,
       required: true,
+      validate: {
+        validator: async function (value) {
+          return /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value);
+        },
+        message: 'Invalid email format. Please enter a valid email address, such as user@example.com.',
+      },
     },
     username: {
       type: mongoose.Schema.Types.String,

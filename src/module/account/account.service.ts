@@ -119,7 +119,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               await session.endSession();
               return reject({
                 status: false,
-                code: status.ABORTED,
+                code: status.FAILED_PRECONDITION,
                 msg: reason,
               });
             });
@@ -518,7 +518,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         issuer: 'service-core-account',
       })
         .then((decodeData) => {
-          this.logger.verbose(decodeData.payload);
           return resolve({
             status: false,
             code: Status.OK,
@@ -695,8 +694,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         issuer: 'service-core-account',
       })
         .then((decodeData) => {
-          this.logger.verbose(decodeData.payload);
-
           this.token
             .findOne({ jti: decodeData.payload.jti })
             .allowDiskUse(true)
