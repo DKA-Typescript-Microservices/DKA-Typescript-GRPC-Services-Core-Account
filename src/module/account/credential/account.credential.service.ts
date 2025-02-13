@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AccountAuthorizeRequest, AccountAuthorizeResponse, AccountVerifyTokenRequest, AccountVerifyTokenResponse, IAccount } from '../../../model/proto/account/account.grpc';
+import { AccountAuthorizeRequest, AccountAuthorizeResponse, AccountVerifyTokenRequest, IAccount } from '../../../model/proto/account/account.grpc';
 import { Metadata, ServerUnaryCall, status } from '@grpc/grpc-js';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
@@ -131,7 +131,7 @@ export class AccountCredentialService {
                     .setSubject(`${process.env.REFRESH_TOKEN_SUBJECT || 'refresh_token'}`);
 
                   const tokenQuery = new this.token({
-                    preference: resultGet.id,
+                    reference: resultGet.id,
                     jti: jti,
                     iss: `${process.env.REFRESH_TOKEN_ISSUER || 'service-core-account'}`,
                     sub: `${process.env.REFRESH_TOKEN_SUBJECT || 'refresh_token'}`,
@@ -211,7 +211,7 @@ export class AccountCredentialService {
     });
   }
 
-  async verifyToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountVerifyTokenResponse> {
+  async verifyToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
       const rootDirectory = path.dirname(require.main.filename);
       const pathRelativeOfServerSSL = './config/ssl/server';
@@ -236,16 +236,10 @@ export class AccountCredentialService {
         subject: 'access_token',
         issuer: 'service-core-account',
       })
-        .then((decodeData) => {
-          return resolve({
-            status: false,
-            code: Status.OK,
-            msg: `Successfully Get Data`,
-            data: decodeData.payload as any,
-          });
+        .then(({ payload }) => {
+          return resolve(payload as IAccount);
         })
         .catch((error) => {
-          this.logger.error(error);
           switch (error.name) {
             case 'JWTExpired':
               return reject({

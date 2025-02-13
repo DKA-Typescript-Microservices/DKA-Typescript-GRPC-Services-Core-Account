@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { AccountCredentialService } from './account.credential.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
-import { AccountAuthorizeRequest, AccountAuthorizeResponse, AccountVerifyTokenRequest, AccountVerifyTokenResponse } from '../../../model/proto/account/account.grpc';
+import { AccountAuthorizeRequest, AccountAuthorizeResponse, AccountVerifyTokenRequest, IAccount } from '../../../model/proto/account/account.grpc';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 
 @Controller()
@@ -29,7 +29,7 @@ export class AccountCredentialController {
   }
 
   @GrpcMethod('Credential', 'verifyToken')
-  async verifyToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountVerifyTokenResponse> {
+  async verifyToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<IAccount> {
     return this.credentialService
       .verifyToken({
         data,

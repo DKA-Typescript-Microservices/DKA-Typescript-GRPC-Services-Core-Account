@@ -2,18 +2,8 @@ import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware';
-import { Metadata, ServerUnaryCall, ServerWritableStream } from '@grpc/grpc-js';
-import {
-  AccountCreateRequest,
-  AccountCreateResponse,
-  AccountAuthorizeRequest,
-  AccountAuthorizeResponse,
-  AccountReadRequest,
-  AccountReadResponse,
-  AccountVerifyTokenRequest,
-  AccountVerifyTokenResponse,
-  IAccount,
-} from '../../model/proto/account/account.grpc';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
+import { AccountCreateRequest, AccountCreateResponse, AccountReadRequest, AccountReadResponse } from '../../model/proto/account/account.grpc';
 
 @Controller()
 export class AccountController {
@@ -59,15 +49,5 @@ export class AccountController {
           details: reason.details,
         });
       });
-  }
-
-  @GrpcMethod('Resources', 'ReadAllStream')
-  @UseInterceptors(RequestGrpcMiddleware)
-  ReadAllStream(data: AccountReadRequest, metadata: Metadata, call: ServerWritableStream<AccountReadRequest, IAccount>) {
-    return this.accountService.ReadAllStream({
-      data,
-      metadata,
-      call,
-    });
   }
 }

@@ -5,7 +5,6 @@ import { RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
 import { AccountCredentialService } from '../module/account/credential/account.credential.service';
 import { Metadata } from '@grpc/grpc-js';
-import { Buffer } from 'buffer';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor {
@@ -50,14 +49,14 @@ export class RequestGrpcMiddleware implements NestInterceptor {
         call: undefined,
       })
       .then((result: any) => {
-        ctx.add('session', result.data);
+        ctx.add('session', result);
         ctx.add('request-time', now.clone().toISOString(true));
         ctx.add('grpc-method', rpcMethod);
 
         return next.handle();
       })
       .catch((error) => {
-        this.logger.error(error);
+        this.logger.error(JSON.stringify(error));
         return throwError(() => new RpcException(error));
       });
   }

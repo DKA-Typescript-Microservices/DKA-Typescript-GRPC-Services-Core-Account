@@ -4,7 +4,7 @@ import { ModelConfig } from '../../../config/const/model.config';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
-    preference: {
+    reference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.account,
       validate: {

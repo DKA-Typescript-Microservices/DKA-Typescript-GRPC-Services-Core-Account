@@ -5,7 +5,7 @@ import * as moment from 'moment-timezone';
 
 export const AccountTokenSchema = new mongoose.Schema<IAccountToken>(
   {
-    preference: {
+    reference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.account,
       validate: {

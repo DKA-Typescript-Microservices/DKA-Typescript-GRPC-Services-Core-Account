@@ -119,11 +119,20 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
+    const session: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
+          /** Converted Id Owner Data Self to ObjectId **/
+          const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${session.id}`);
+          /** Starting Aggregation Data **/
           const query = this.account.aggregate([
+            {
+              $match: {
+                $or: [{ reference: IdOfOwnerAccount }, { _id: IdOfOwnerAccount }],
+              },
+            },
             {
               $lookup: {
                 from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
@@ -199,124 +208,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 details: error,
               });
             });
-        case ConnectionStates.disconnected:
-          return reject({
-            status: false,
-            code: status.UNAVAILABLE,
-            msg: 'Database is unavailable at the moment. Please try again later.',
-            details: 'The database service is currently down. Contact the developer if the issue persists.',
-          });
-        default:
-          return reject({
-            status: false,
-            code: status.UNKNOWN,
-            msg: 'An internal server error occurred. Please try again later.',
-            details: 'A system error was encountered. The development team is investigating.',
-          });
-      }
-    });
-  }
-
-  async ReadAllStream(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerWritableStream<AccountReadRequest, IAccount> }): Promise<Observable<IAccount>> {
-    return new Promise(async (resolve, reject) => {
-      /** Mendeteksi Status Database Sebelum Lakukan Query **/
-      switch (this.connection.readyState) {
-        case ConnectionStates.connected:
-          /** Declaration Function **/
-          const query = this.account.aggregate([
-            {
-              $lookup: {
-                from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
-                localField: 'info',
-                foreignField: '_id',
-                as: 'info',
-              },
-            },
-            {
-              $unwind: {
-                path: '$info',
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $project: {
-                'info._id': 0,
-                'info.parent': 0,
-              },
-            },
-            {
-              $lookup: {
-                from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
-                localField: 'credential',
-                foreignField: '_id',
-                as: 'credential',
-              },
-            },
-            {
-              $unwind: {
-                path: '$credential',
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $project: {
-                'credential._id': 0,
-                'credential.password': 0,
-                'credential.parent': 0,
-              },
-            },
-          ]);
-
-          if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.allowDiskUse !== undefined)
-            query.allowDiskUse(payload.data.options.allowDiskUse);
-          if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
-
-          query.exec().then((r) => this.logger.verbose(r.length));
-          const stream = query.cursor().addCursorFlag('noCursorTimeout', true);
-          const metaData = new Metadata();
-          const startTime = moment(moment.now());
-
-          const subject = new Subject<IAccount>();
-
-          payload.call.on('close', async () => {
-            if (!stream.closed) await stream.close();
-          });
-
-          let num = 0;
-          stream.on('data', async (doc) => {
-            setTimeout(() => {
-              subject.next(doc);
-            }, 200);
-            this.logger.log(num);
-            num++;
-          });
-
-          /**
-           * Jika stream selesai secara alami
-           */
-          stream.on('end', async () => {
-            this.logger.verbose('selesai');
-            const endTime = moment(moment.now());
-            const processingTime = moment.duration(endTime.diff(startTime));
-            // Kirim metadata ke client sebelum stream ditutup
-            metaData.set('x-time-started', startTime.toISOString(true));
-            metaData.set('x-time-finished', endTime.toISOString(true));
-            metaData.set('x-time-processing', `${processingTime.hours()} h, ${processingTime.minutes()} m, ${processingTime.seconds()} s, ${processingTime.milliseconds()} ms`);
-            subject.complete();
-            payload.call.end(metaData);
-            if (!stream.closed) await stream.close();
-          });
-
-          /**
-           * Jika terjadi error pada stream
-           */
-          stream.on('error', async (err) => {
-            this.logger.log('Stream error:', err);
-            subject.error(err);
-            if (!stream.closed) await stream.close();
-          });
-
-          return resolve(subject.asObservable());
         case ConnectionStates.disconnected:
           return reject({
             status: false,

@@ -4,6 +4,7 @@ yarn.lock
 build
 node_modules
 dist
+.env.example
 .gitmodules
 .gitignore
 Makefile
