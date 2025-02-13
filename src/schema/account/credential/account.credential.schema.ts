@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
-import { IAccountCredential } from '../model/database/account.credential.model';
-import { ModelConfig } from '../config/const/model.config';
+import { IAccountCredential } from '../../../model/database/account/credential/account.credential.model';
+import { ModelConfig } from '../../../config/const/model.config';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {

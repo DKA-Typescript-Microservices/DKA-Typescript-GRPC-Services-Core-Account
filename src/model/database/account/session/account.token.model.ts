@@ -1,5 +1,5 @@
 import { Document, Schema } from 'mongoose';
-import { ISysTimeInfo } from './sys.TimeInfo.model';
+import { ISysTimeInfo } from '../../sys.TimeInfo.model';
 
 export interface IAccountToken extends Document {
   preference: Schema.Types.ObjectId;

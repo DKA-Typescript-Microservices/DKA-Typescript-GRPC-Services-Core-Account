@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { ModelConfig } from '../config/const/model.config';
-import { IAccountToken } from '../model/database/account.token.model';
+import { ModelConfig } from '../../../config/const/model.config';
+import { IAccountToken } from '../../../model/database/account/session/account.token.model';
 import * as moment from 'moment-timezone';
 
 export const AccountTokenSchema = new mongoose.Schema<IAccountToken>(

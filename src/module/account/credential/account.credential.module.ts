@@ -1,21 +1,15 @@
 import { Module } from '@nestjs/common';
-import { AccountService } from './account.service';
-import { AccountController } from './account.controller';
+import { AccountCredentialService } from './account.credential.service';
+import { AccountCredentialController } from './account.credential.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountSchema, { AccountModel } from '../../schema/account/account.schema';
-import AccountInfoSchema, { AccountInfoModel } from '../../schema/account/info/account.info.schema';
-import AccountCredentialSchema, { AccountCredentialModel } from '../../schema/account/credential/account.credential.schema';
-import AccountTokenSchema, { AccountTokenModel } from '../../schema/account/session/account.token.schema';
-import { AccountCredentialModule } from './credential/account.credential.module';
-import { AccountCredentialService } from './credential/account.credential.service';
-import { ConfigModule } from '@nestjs/config';
+import AccountCredentialSchema, { AccountCredentialModel } from '../../../schema/account/credential/account.credential.schema';
+import AccountInfoSchema, { AccountInfoModel } from '../../../schema/account/info/account.info.schema';
+import AccountSchema, { AccountModel } from '../../../schema/account/account.schema';
+import AccountTokenSchema, { AccountTokenModel } from '../../../schema/account/session/account.token.schema';
 import * as process from 'node:process';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
     MongooseModule.forRoot(`mongodb://${process.env.DKA_MONGO_HOST || '127.0.0.1'}:${process.env.DKA_MONGO_PORT || 27017}`, {
       auth: {
         username: `${process.env.DKA_MONGO_USERNAME || 'root'}`,
@@ -32,10 +26,8 @@ import * as process from 'node:process';
       { schema: AccountSchema, name: AccountModel.modelName },
       { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
     ]),
-    AccountCredentialModule,
   ],
-
-  controllers: [AccountController],
-  providers: [AccountService, AccountCredentialService],
+  controllers: [AccountCredentialController],
+  providers: [AccountCredentialService],
 })
-export class AccountModule {}
+export class AccountCredentialModule {}

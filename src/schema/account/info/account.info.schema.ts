@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { IAccountInfo } from '../model/database/account.info.model';
-import { ModelConfig } from '../config/const/model.config';
+import { IAccountInfo } from '../../../model/database/account/info/account.info.model';
+import { ModelConfig } from '../../../config/const/model.config';
 
 export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   {
