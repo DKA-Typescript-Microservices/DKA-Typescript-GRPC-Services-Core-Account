@@ -8,27 +8,29 @@ import * as path from 'node:path';
   const clientDir = path.join(require.main.path, '../config/ssl/client');
 
   if (!fs.existsSync(caDir)) {
-    console.log(`ca not exist please create first`);
+    console.error(`ca not exist please create first`);
     return process.exit(1);
   }
 
   const caCertFile = path.join(caDir, './ca.crt');
-  const caKeyFile = path.join(caDir, './ca.crt');
+  const caKeyFile = path.join(caDir, './private.key');
 
   if (!fs.existsSync(caCertFile)) {
-    console.log(`ca file certificate is not exist`);
+    console.error(`ca file certificate is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(caKeyFile)) {
-    console.log(`ca file Key is not exist`);
+    console.error(`ca file Key is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(clientDir)) {
-    console.log('Membuat Client Certificate directory');
+    console.debug('Membuat Client Certificate directory');
     fs.mkdirSync(clientDir, { recursive: true, mode: 0o775 });
   }
+
+  console.debug(`Create a Client Certificate ....`);
 
   const CACert = fs.readFileSync(caCertFile, 'utf-8');
   const CAKey = fs.readFileSync(caKeyFile, 'utf-8');
@@ -62,6 +64,7 @@ import * as path from 'node:path';
     .then((result) => {
       fs.writeFileSync(path.join(clientDir, './private.key'), Buffer.from(result.keys.privateKey));
       fs.writeFileSync(path.join(clientDir, './client.crt'), Buffer.from(result.certificate));
+      console.debug(`Create Client Certificate Is succeed`);
     })
     .catch((error) => {
       console.error(error);

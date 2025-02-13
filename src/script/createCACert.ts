@@ -12,6 +12,8 @@ import { md } from 'node-forge';
     fs.mkdirSync(caDir, { recursive: true, mode: 0o775 });
   }
 
+  console.debug(`Create a CA Certificate ....`);
+
   await SSL.generateCA({
     keys: SSL.generateKey({
       privateKeyEncoding: {
@@ -73,8 +75,9 @@ import { md } from 'node-forge';
     .then((res) => {
       fs.writeFileSync(path.join(caDir, './private.key'), Buffer.from(res.keys.privateKey));
       fs.writeFileSync(path.join(caDir, './ca.crt'), Buffer.from(res.certificate));
+      console.debug(`Create CA Certificate Is succeed`);
     })
     .catch((error) => {
-      console.log(error);
+      console.error(error);
     });
 })();
