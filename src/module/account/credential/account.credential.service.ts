@@ -18,6 +18,7 @@ import { EncryptJWT, jwtDecrypt } from 'jose';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { createPublicKey } from 'crypto';
 import { createPrivateKey } from 'node:crypto';
+import { DurationInputArg2 } from 'moment';
 
 @Injectable()
 export class AccountCredentialService {
@@ -106,32 +107,37 @@ export class AccountCredentialService {
 
                   const jti = v5(timeNow.toISOString(true), v5.DNS);
 
-                  const AccessTokenExpires = timeNow.add(20, 'seconds').unix();
-                  const RefreshTokenExpires = timeNow.add(1, 'days').unix();
+                  const AccessTokenExpires = timeNow
+                    .clone()
+                    .add(Number(`${process.env.ACCESS_TOKEN_EXPIRES_AMOUNT || 5}`), `${(process.env.ACCESS_TOKEN_EXPIRES_UNIT as DurationInputArg2) || 'minutes'}`);
+                  const RefreshTokenExpires = timeNow
+                    .clone()
+                    .add(Number(`${process.env.REFRESH_TOKEN_EXPIRES_AMOUNT || 1}`), `${(process.env.REFRESH_TOKEN_EXPIRES_UNIT as DurationInputArg2) || 'days'}`);
 
                   const AccessToken = new EncryptJWT(resultGet)
                     .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
-                    .setExpirationTime(AccessTokenExpires)
+                    .setExpirationTime(AccessTokenExpires.unix())
                     .setAudience(resultGet.id)
-                    .setIssuer('service-core-account')
-                    .setSubject('access_token');
+                    .setJti(jti)
+                    .setIssuer(`${process.env.ACCESS_TOKEN_ISSUER || 'service-core-account'}`)
+                    .setSubject(`${process.env.ACCESS_TOKEN_SUBJECT || 'access_token'}`);
 
                   const RefreshToken = new EncryptJWT(resultGet)
                     .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
-                    .setExpirationTime(RefreshTokenExpires)
-                    .setIssuer('service-core-account')
+                    .setExpirationTime(RefreshTokenExpires.unix())
                     .setAudience(resultGet.id)
                     .setJti(jti)
-                    .setSubject('refresh_token');
+                    .setIssuer(`${process.env.REFRESH_TOKEN_ISSUER || 'service-core-account'}`)
+                    .setSubject(`${process.env.REFRESH_TOKEN_SUBJECT || 'refresh_token'}`);
 
                   const tokenQuery = new this.token({
                     preference: resultGet.id,
                     jti: jti,
-                    sub: 'refresh_token',
-                    iss: 'service-core-account',
+                    iss: `${process.env.REFRESH_TOKEN_ISSUER || 'service-core-account'}`,
+                    sub: `${process.env.REFRESH_TOKEN_SUBJECT || 'refresh_token'}`,
                     time_expired: {
-                      humanize: moment.unix(RefreshTokenExpires).format('HH:mm:ss DD MMMM YYYY'),
-                      unix: RefreshTokenExpires,
+                      humanize: moment(RefreshTokenExpires).format('HH:mm:ss DD MMMM YYYY'),
+                      unix: RefreshTokenExpires.unix(),
                     },
                   });
 
@@ -142,11 +148,10 @@ export class AccountCredentialService {
                         .then(() => {
                           /** enc token **/
                           return resolve({
-                            status: true,
-                            code: Status.OK,
-                            msg: `Successfully to Created Token`,
+                            tokenType: 'Bearer',
                             accessToken: accessToken,
                             refreshToken: refreshToken,
+                            expiresIn: moment.duration(AccessTokenExpires.diff(timeNow)).asSeconds(),
                           });
                         })
                         .catch((error) => {
@@ -399,9 +404,6 @@ export class AccountCredentialService {
   }
 
   async refreshToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
-    //#########################################
-    const timeNow = moment(moment.now());
-    //#########################################
     return new Promise(async (resolve, reject) => {
       const rootDirectory = path.dirname(require.main.filename);
       const pathRelativeOfServerSSL = './config/ssl/server';
@@ -431,6 +433,10 @@ export class AccountCredentialService {
       const privateKey = fs.readFileSync(path.join(pathOfServerSSL, './private.key'));
       const publicKey = fs.readFileSync(path.join(pathOfServerSSL, './public.key'));
 
+      //#########################################
+      const timeNow = moment(moment.now());
+      //#########################################
+
       return jwtDecrypt(payload.data.token, createPrivateKey(privateKey), {
         subject: 'refresh_token',
         issuer: 'service-core-account',
@@ -453,7 +459,7 @@ export class AccountCredentialService {
               if (!findJti.status)
                 return reject({
                   status: false,
-                  code: Status.FAILED_PRECONDITION,
+                  code: Status.RESOURCE_EXHAUSTED,
                   msg: `Token has been revocation. please generate new token`,
                   details: 'Token has been revocation or failed. Please request a new one.',
                 });
@@ -468,20 +474,23 @@ export class AccountCredentialService {
                 .lean()
                 .exec()
                 .then((resultGet) => {
+                  const AccessTokenExpires = timeNow
+                    .clone()
+                    .add(Number(`${process.env.ACCESS_TOKEN_EXPIRES_AMOUNT || 5}`), `${(process.env.ACCESS_TOKEN_EXPIRES_UNIT as DurationInputArg2) || 'minutes'}`);
+
                   return new EncryptJWT(resultGet)
                     .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
-                    .setExpirationTime(timeNow.add(15, 'minutes').unix())
+                    .setExpirationTime(AccessTokenExpires.unix())
                     .setAudience(resultGet.id)
-                    .setIssuer('service-core-account')
-                    .setSubject('access_token')
+                    .setIssuer(`${process.env.ACCESS_TOKEN_ISSUER || 'service-core-account'}`)
+                    .setSubject(`${process.env.ACCESS_TOKEN_SUBJECT || 'access_token'}`)
                     .encrypt(createPublicKey(publicKey))
                     .then((newToken) => {
                       return resolve({
-                        status: false,
-                        code: Status.OK,
-                        msg: `Successfully Get Data`,
+                        tokenType: 'Bearer',
                         accessToken: newToken,
                         refreshToken: payload.data.token,
+                        expiresIn: moment.duration(AccessTokenExpires.diff(timeNow)).asSeconds(),
                       });
                     })
                     .catch((error) => {
