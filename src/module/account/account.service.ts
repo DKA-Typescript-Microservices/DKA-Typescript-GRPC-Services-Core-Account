@@ -353,30 +353,38 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     });
                   }
 
-                  return this.account
-                    .findOne({ _id: payload.data.query.id })
-                    .populate('info')
-                    .populate('credential')
-                    .lean()
-                    .exec()
-                    .then(async (resultGet) => {
-                      await session.commitTransaction();
-                      await session.endSession();
-
-                      resultGet.id = resultGet._id.toString(); // Set the `id` field
-                      delete resultGet._id; // Remove the original _id field
-
-                      return resolve(resultGet);
+                  return Promise.all([session.commitTransaction(), session.endSession()])
+                    .then(async () => {
+                      return this.account
+                        .findOne({ _id: payload.data.query.id })
+                        .populate('info')
+                        .populate('credential')
+                        .lean()
+                        .exec()
+                        .then(async (resultGet) => {
+                          resultGet.id = resultGet._id.toString(); // Set the `id` field
+                          delete resultGet._id; // Remove the original _id field
+                          return resolve(resultGet);
+                        })
+                        .catch(async (error) => {
+                          this.logger.error(JSON.stringify(error));
+                          await session.abortTransaction();
+                          await session.endSession();
+                          return reject({
+                            status: false,
+                            code: status.FAILED_PRECONDITION,
+                            msg: 'Failed To get new Data ',
+                            details: 'Failed To get new Data',
+                          });
+                        });
                     })
-                    .catch(async (error) => {
-                      this.logger.error(JSON.stringify(error));
-                      await session.abortTransaction();
-                      await session.endSession();
+                    .catch((error) => {
+                      this.logger.error(error);
                       return reject({
                         status: false,
-                        code: status.FAILED_PRECONDITION,
-                        msg: 'Failed To get new Data ',
-                        details: 'Failed To get new Data',
+                        code: status.INTERNAL,
+                        msg: 'Failed To Commit or close transaction',
+                        details: 'Failed To Commit or close transaction',
                       });
                     });
                 })
