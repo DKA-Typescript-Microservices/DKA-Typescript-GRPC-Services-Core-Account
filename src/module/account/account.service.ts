@@ -35,6 +35,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
    * @constructor
    */
   async Create(payload: { data: AccountCreateRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountCreateResponse> {
+    const authSession: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -48,7 +49,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Save Child Collection Account **/
           return Promise.all([info.save({ session }), credential.save({ session })])
             .then(async ([info, credential]) => {
-              const account = new this.account({ credential: credential.id, info: info.id });
+              const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id });
               return account
                 .save({ session })
                 .then(async (finalResult: any) => {
@@ -130,9 +131,26 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           const query = this.account.aggregate([
             {
               $match: {
-                $or: [{ reference: IdOfOwnerAccount }, { _id: IdOfOwnerAccount }],
+                $or: [{ _id: IdOfOwnerAccount }],
               },
             },
+            {
+              $graphLookup: {
+                from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
+                startWith: '$_id',
+                connectFromField: '_id',
+                connectToField: 'reference',
+                as: 'children',
+                restrictSearchWithMatch: { reference: { $exists: true } },
+              },
+            },
+            {
+              $addFields: {
+                merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
+              },
+            },
+            { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
+            { $replaceRoot: { newRoot: '$merged' } }, // Jadikan `merged` sebagai root
             {
               $lookup: {
                 from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'

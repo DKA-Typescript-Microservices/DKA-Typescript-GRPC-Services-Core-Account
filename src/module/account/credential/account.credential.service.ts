@@ -472,6 +472,9 @@ export class AccountCredentialService {
                     .clone()
                     .add(Number(`${process.env.ACCESS_TOKEN_EXPIRES_AMOUNT || 5}`), `${(process.env.ACCESS_TOKEN_EXPIRES_UNIT as DurationInputArg2) || 'minutes'}`);
 
+                  resultGet.id = resultGet._id.toString(); // Set the `id` field
+                  delete resultGet._id; // Remove the original _id field
+
                   return new EncryptJWT(resultGet)
                     .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
                     .setExpirationTime(AccessTokenExpires.unix())

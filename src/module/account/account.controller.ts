@@ -11,6 +11,7 @@ export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @GrpcMethod('Resources', 'Create')
+  @UseInterceptors(RequestGrpcMiddleware)
   async Create(data: AccountCreateRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountCreateResponse> {
     return this.accountService
       .Create({
