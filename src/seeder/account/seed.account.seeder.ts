@@ -26,19 +26,39 @@ export class SeedAccountSeeder implements Seeder {
   private readonly token: Model<IAccountToken>;
 
   async seed() {
+    await Promise.all([
+      this.ClassModelAccounts({
+        info: {
+          firstName: 'Admin',
+          lastName: 'Admin',
+        },
+        credential: {
+          username: 'admin',
+          email: 'admin@example.com',
+          password: 'admin',
+        },
+      }),
+      this.ClassModelAccounts({
+        info: {
+          firstName: 'developer',
+          lastName: 'developer',
+        },
+        credential: {
+          username: 'developer',
+          email: 'developer@example.com',
+          password: 'developer',
+        },
+      }),
+    ]);
+  }
+
+  private async ClassModelAccounts(payload: { info: any; credential: any }) {
     /** Start Session **/
     const session = await this.connection.startSession();
     session.startTransaction();
     /** Init Model **/
-    const info = new this.info({
-      firstName: 'Yovangga',
-      lastName: 'Anandhika',
-    });
-    const credential = new this.credential({
-      username: 'developer',
-      email: 'dka.tech.dev@gmail.com',
-      password: 'Cyberhack2010',
-    });
+    const info = new this.info(payload.info);
+    const credential = new this.credential(payload.credential);
     /** Save Child Collection Account **/
     await Promise.all([info.save({ session }), credential.save({ session })])
       .then(async ([info, credential]) => {
@@ -49,7 +69,6 @@ export class SeedAccountSeeder implements Seeder {
             return Promise.all([
               this.info.updateOne({ _id: info.id }, { parent: finalResult._id }, { session }),
               this.credential.updateOne({ _id: credential.id }, { parent: finalResult._id }, { session }),
-              this.account.updateOne({ _id: finalResult._id }, { reference: finalResult._id }, { session }),
             ])
               .then(async () => {
                 await session.commitTransaction();
