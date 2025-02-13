@@ -5,8 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "assets": [
-      "**/*.proto",
-      "**/ssl/**/*"
+      "**/*.proto"
     ],
     "watchAssets": true
   }

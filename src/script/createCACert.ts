@@ -1,11 +1,16 @@
 import { OpenSSL } from '@dkaframework/security';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as process from 'node:process';
 import { md } from 'node-forge';
 
 (async () => {
   const SSL = new OpenSSL();
+
+  const caDir = path.join(require.main.path, '../config/ssl/ca');
+
+  if (!fs.existsSync(caDir)) {
+    fs.mkdirSync(caDir, { recursive: true, mode: 0o775 });
+  }
 
   await SSL.generateCA({
     keys: SSL.generateKey({
@@ -66,8 +71,8 @@ import { md } from 'node-forge';
     },
   })
     .then((res) => {
-      fs.writeFileSync(path.join(process.cwd(), 'src/config/ssl/ca/private.key'), Buffer.from(res.keys.privateKey));
-      fs.writeFileSync(path.join(process.cwd(), 'src/config/ssl/ca/ca.crt'), Buffer.from(res.certificate));
+      fs.writeFileSync(path.join(caDir, './private.key'), Buffer.from(res.keys.privateKey));
+      fs.writeFileSync(path.join(caDir, './ca.crt'), Buffer.from(res.certificate));
     })
     .catch((error) => {
       console.log(error);
