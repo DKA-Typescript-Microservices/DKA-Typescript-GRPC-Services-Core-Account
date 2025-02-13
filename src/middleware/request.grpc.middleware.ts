@@ -1,13 +1,16 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
-import { catchError, Observable, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
+import { AccountService } from '../module/account/account.service';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor {
   private readonly logger: Logger = new Logger(this.constructor.name);
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+
+  constructor(private readonly accountService: AccountService) {}
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> | Promise<Observable<any>> {
     //##########################################################################
     const rpcMethod = context.getHandler().name;
     const grpcContext = context.switchToRpc();
@@ -34,10 +37,27 @@ export class RequestGrpcMiddleware implements NestInterceptor {
           }),
       );
 
-    ctx.add('token', `${Authorization}`.split(' ')[1]);
-    ctx.add('request-time', now.toISOString(true));
-    ctx.add('grpc-method', rpcMethod);
+    const accessToken = `${Authorization}`.split(' ')[1];
 
-    return next.handle();
+    return this.accountService
+      .verifyToken({
+        data: {
+          token: accessToken,
+        },
+        metadata: ctx,
+        call: undefined,
+      })
+      .then((result) => {
+        this.logger.verbose(result);
+        ctx.add('session', result);
+        ctx.add('request-time', now.toISOString(true));
+        ctx.add('grpc-method', rpcMethod);
+
+        return next.handle();
+      })
+      .catch((error) => {
+        this.logger.error(error);
+        return throwError(() => new RpcException(error));
+      });
   }
 }

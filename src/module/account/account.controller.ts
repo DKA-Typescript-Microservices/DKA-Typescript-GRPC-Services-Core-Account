@@ -6,8 +6,8 @@ import { Metadata, ServerUnaryCall, ServerWritableStream } from '@grpc/grpc-js';
 import {
   AccountCreateRequest,
   AccountCreateResponse,
-  AccountGetTokenRequest,
-  AccountGetTokenResponse,
+  AccountAuthorizeRequest,
+  AccountAuthorizeResponse,
   AccountReadRequest,
   AccountReadResponse,
   AccountVerifyTokenRequest,
@@ -20,7 +20,7 @@ export class AccountController {
   private readonly logger: Logger = new Logger(this.constructor.name);
   constructor(private readonly accountService: AccountService) {}
 
-  @GrpcMethod('Account', 'Create')
+  @GrpcMethod('Resources', 'Create')
   async Create(data: AccountCreateRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountCreateResponse> {
     return this.accountService
       .Create({
@@ -40,7 +40,8 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Account', 'ReadAll')
+  @GrpcMethod('Resources', 'ReadAll')
+  @UseInterceptors(RequestGrpcMiddleware)
   async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
     return await this.accountService
       .ReadAll({
@@ -60,7 +61,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Account', 'ReadAllStream')
+  @GrpcMethod('Resources', 'ReadAllStream')
   @UseInterceptors(RequestGrpcMiddleware)
   ReadAllStream(data: AccountReadRequest, metadata: Metadata, call: ServerWritableStream<AccountReadRequest, IAccount>) {
     return this.accountService.ReadAllStream({
@@ -70,10 +71,10 @@ export class AccountController {
     });
   }
 
-  @GrpcMethod('Account', 'getToken')
-  async getToken(data: AccountGetTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountGetTokenResponse> {
+  @GrpcMethod('Credential', 'authorize')
+  async Authorize(data: AccountAuthorizeRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountAuthorizeResponse> {
     return this.accountService
-      .getToken({
+      .Authorize({
         data,
         metadata,
         call,
@@ -90,7 +91,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Account', 'verifyToken')
+  @GrpcMethod('Credential', 'verifyToken')
   async verifyToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountVerifyTokenResponse> {
     return this.accountService
       .verifyToken({
@@ -110,8 +111,8 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Account', 'refreshToken')
-  async refreshToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountGetTokenResponse> {
+  @GrpcMethod('Credential', 'refreshToken')
+  async refreshToken(data: AccountVerifyTokenRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountAuthorizeResponse> {
     return this.accountService
       .refreshToken({
         data,

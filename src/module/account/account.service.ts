@@ -11,8 +11,8 @@ import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
   AccountCreateRequest,
   AccountCreateResponse,
-  AccountGetTokenRequest,
-  AccountGetTokenResponse,
+  AccountAuthorizeRequest,
+  AccountAuthorizeResponse,
   AccountReadRequest,
   AccountReadResponse,
   AccountVerifyTokenRequest,
@@ -357,9 +357,27 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async getToken(payload: { data: AccountGetTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountGetTokenResponse> {
+  async Authorize(payload: { data: AccountAuthorizeRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
     return new Promise(async (resolve, reject) => {
-      const publicKey = fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/public.key'));
+      const rootDirectory = path.dirname(require.main.filename);
+      const pathRelativeOfServerSSL = './config/ssl/server';
+
+      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+
+      if (!fs.existsSync(pathOfServerSSL)) {
+        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
+      }
+
+      if (!fs.existsSync(path.join(pathOfServerSSL, './public.key')))
+        return reject({
+          status: false,
+          code: Status.INTERNAL,
+          msg: `public key is missing, miss configured.`,
+          details: 'Please Create A SSL Public Key Encrypted.',
+        });
+
+      const publicKey = fs.readFileSync(path.join(pathOfServerSSL, './public.key'));
+
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -411,11 +429,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
                   const jti = v5(timeNow.toISOString(true), v5.DNS);
 
+                  const AccessTokenExpires = timeNow.add(20, 'seconds').unix();
                   const RefreshTokenExpires = timeNow.add(1, 'days').unix();
 
                   const AccessToken = new EncryptJWT(resultGet)
                     .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
-                    .setExpirationTime(timeNow.add(15, 'minutes').unix())
+                    .setExpirationTime(AccessTokenExpires)
                     .setAudience(resultGet.id)
                     .setIssuer('service-core-account')
                     .setSubject('access_token');
@@ -511,8 +530,26 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async verifyToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountVerifyTokenResponse> {
-    const privateKey = fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/private.key'));
     return new Promise(async (resolve, reject) => {
+      const rootDirectory = path.dirname(require.main.filename);
+      const pathRelativeOfServerSSL = './config/ssl/server';
+
+      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+
+      if (!fs.existsSync(pathOfServerSSL)) {
+        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
+      }
+
+      if (!fs.existsSync(path.join(pathOfServerSSL, './private.key')))
+        return reject({
+          status: false,
+          code: Status.INTERNAL,
+          msg: `private key is missing, miss configured.`,
+          details: 'Please Create A SSL Private Key Decrypted.',
+        });
+
+      const privateKey = fs.readFileSync(path.join(pathOfServerSSL, './private.key'));
+
       return jwtDecrypt(payload.data.token, createPrivateKey(privateKey), {
         subject: 'access_token',
         issuer: 'service-core-account',
@@ -539,7 +576,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWEDecryptionFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid or malformed token.`,
                 details: 'The token is malformed or could not be decoded.',
               });
@@ -547,7 +584,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'NotBeforeError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `Token is not active yet.`,
                 details: 'The token is not yet active based on the "nbf" claim.',
               });
@@ -555,7 +592,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JsonWebTokenIssuerError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Invalid issuer.`,
                 details: 'The issuer of the token is not valid. Please check the token issuer.',
               });
@@ -563,7 +600,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JsonWebTokenSubjectError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Invalid subject.`,
                 details: 'The subject of the token is not valid. Please check the token subject.',
               });
@@ -571,7 +608,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSEAlgNotAllowed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Algorithm not allowed.`,
                 details: 'The algorithm used in the token is not allowed. Please check the token algorithm.',
               });
@@ -579,7 +616,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSEError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `JOSE error.`,
                 details: 'There was an issue with JOSE encoding or decoding. Please check the token structure.',
               });
@@ -587,7 +624,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSENotSupported':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNAVAILABLE,
                 msg: `JOSE format not supported.`,
                 details: 'The JOSE format used in the token is not supported. Please check the token format.',
               });
@@ -595,7 +632,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWEInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWE.`,
                 details: 'The JWE (JSON Web Encryption) is invalid. Please check the encryption settings.',
               });
@@ -603,7 +640,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWK.`,
                 details: 'The JSON Web Key (JWK) is invalid or cannot be used for this operation.',
               });
@@ -611,7 +648,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWKS.`,
                 details: 'The JSON Web Key Set (JWKS) is invalid or cannot be used.',
               });
@@ -619,7 +656,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSMultipleMatchingKeys':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `Multiple matching keys in JWKS.`,
                 details: 'There are multiple keys in the JWKS that match the token. Only one key should match.',
               });
@@ -627,7 +664,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSNoMatchingKey':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `No matching key in JWKS.`,
                 details: 'No key was found in the JWKS that matches the token. Please check the key set.',
               });
@@ -635,7 +672,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSTimeout':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWKS timeout.`,
                 details: 'The process of fetching JWKS timed out. Please try again later.',
               });
@@ -643,7 +680,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWSInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWS.`,
                 details: 'The JWS (JSON Web Signature) is invalid. Please check the signature.',
               });
@@ -651,7 +688,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWSSignatureVerificationFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWS signature verification failed.`,
                 details: 'The signature verification for the JWS failed. Please check the signing key or process.',
               });
@@ -659,7 +696,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWTClaimValidationFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWT claim validation failed.`,
                 details: 'The claims in the JWT did not pass validation. Please check the claim values.',
               });
@@ -667,7 +704,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWTInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWT.`,
                 details: 'The JWT is invalid. Please check the token structure or claims.',
               });
@@ -675,7 +712,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             default:
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNIMPLEMENTED,
                 msg: `${error.toString()}`,
                 details: 'The token might be corrupted or incorrect.',
               });
@@ -684,11 +721,39 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async refreshToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountGetTokenResponse> {
-    const privateKey = fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/private.key'));
+  async refreshToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
+    //#########################################
     const timeNow = moment(moment.now());
-    const publicKey = fs.readFileSync(path.join(path.dirname(require.main.filename), './config/ssl/server/public.key'));
+    //#########################################
     return new Promise(async (resolve, reject) => {
+      const rootDirectory = path.dirname(require.main.filename);
+      const pathRelativeOfServerSSL = './config/ssl/server';
+
+      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+
+      if (!fs.existsSync(pathOfServerSSL)) {
+        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
+      }
+
+      if (!fs.existsSync(path.join(pathOfServerSSL, './private.key')))
+        return reject({
+          status: false,
+          code: Status.INTERNAL,
+          msg: `private key is missing, miss configured.`,
+          details: 'Please Create A SSL Private Key Decrypted.',
+        });
+
+      if (!fs.existsSync(path.join(pathOfServerSSL, './public.key')))
+        return reject({
+          status: false,
+          code: Status.INTERNAL,
+          msg: `Public key is missing, miss configured.`,
+          details: 'Please Create A SSL Public Key Encrypted.',
+        });
+
+      const privateKey = fs.readFileSync(path.join(pathOfServerSSL, './private.key'));
+      const publicKey = fs.readFileSync(path.join(pathOfServerSSL, './public.key'));
+
       return jwtDecrypt(payload.data.token, createPrivateKey(privateKey), {
         subject: 'refresh_token',
         issuer: 'service-core-account',
@@ -786,7 +851,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWEDecryptionFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid or malformed token.`,
                 details: 'The token is malformed or could not be decoded.',
               });
@@ -794,7 +859,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'NotBeforeError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `Token is not active yet.`,
                 details: 'The token is not yet active based on the "nbf" claim.',
               });
@@ -802,7 +867,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JsonWebTokenIssuerError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Invalid issuer.`,
                 details: 'The issuer of the token is not valid. Please check the token issuer.',
               });
@@ -810,7 +875,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JsonWebTokenSubjectError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Invalid subject.`,
                 details: 'The subject of the token is not valid. Please check the token subject.',
               });
@@ -818,7 +883,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSEAlgNotAllowed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNKNOWN,
                 msg: `Algorithm not allowed.`,
                 details: 'The algorithm used in the token is not allowed. Please check the token algorithm.',
               });
@@ -826,7 +891,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSEError':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `JOSE error.`,
                 details: 'There was an issue with JOSE encoding or decoding. Please check the token structure.',
               });
@@ -834,7 +899,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JOSENotSupported':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNAVAILABLE,
                 msg: `JOSE format not supported.`,
                 details: 'The JOSE format used in the token is not supported. Please check the token format.',
               });
@@ -842,7 +907,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWEInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWE.`,
                 details: 'The JWE (JSON Web Encryption) is invalid. Please check the encryption settings.',
               });
@@ -850,7 +915,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWK.`,
                 details: 'The JSON Web Key (JWK) is invalid or cannot be used for this operation.',
               });
@@ -858,7 +923,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWKS.`,
                 details: 'The JSON Web Key Set (JWKS) is invalid or cannot be used.',
               });
@@ -866,7 +931,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSMultipleMatchingKeys':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INTERNAL,
                 msg: `Multiple matching keys in JWKS.`,
                 details: 'There are multiple keys in the JWKS that match the token. Only one key should match.',
               });
@@ -874,7 +939,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSNoMatchingKey':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `No matching key in JWKS.`,
                 details: 'No key was found in the JWKS that matches the token. Please check the key set.',
               });
@@ -882,7 +947,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWKSTimeout':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWKS timeout.`,
                 details: 'The process of fetching JWKS timed out. Please try again later.',
               });
@@ -890,7 +955,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWSInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWS.`,
                 details: 'The JWS (JSON Web Signature) is invalid. Please check the signature.',
               });
@@ -898,7 +963,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWSSignatureVerificationFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWS signature verification failed.`,
                 details: 'The signature verification for the JWS failed. Please check the signing key or process.',
               });
@@ -906,7 +971,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWTClaimValidationFailed':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.FAILED_PRECONDITION,
                 msg: `JWT claim validation failed.`,
                 details: 'The claims in the JWT did not pass validation. Please check the claim values.',
               });
@@ -914,7 +979,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             case 'JWTInvalid':
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.INVALID_ARGUMENT,
                 msg: `Invalid JWT.`,
                 details: 'The JWT is invalid. Please check the token structure or claims.',
               });
@@ -922,7 +987,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             default:
               return reject({
                 status: false,
-                code: Status.UNAUTHENTICATED,
+                code: Status.UNIMPLEMENTED,
                 msg: `${error.toString()}`,
                 details: 'The token might be corrupted or incorrect.',
               });
