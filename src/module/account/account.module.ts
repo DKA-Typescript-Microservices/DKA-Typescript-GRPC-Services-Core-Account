@@ -25,6 +25,7 @@ import * as process from 'node:process';
       replicaSet: `${process.env.DKA_MONGO_RS || 'rs0'}`,
       connectTimeoutMS: 2000,
       timeoutMS: 10000,
+      directConnection: process.env.DKA_MONGO_CONNECTION_DIRECT === 'true',
     }),
     MongooseModule.forFeature([
       { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },

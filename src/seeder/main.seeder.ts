@@ -1,15 +1,16 @@
-import { Module } from '@nestjs/common';
-import { AccountCredentialService } from './account.credential.service';
-import { AccountCredentialController } from './account.credential.controller';
+import { seeder } from 'nestjs-seeder';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountCredentialSchema, { AccountCredentialModel } from '../../../schema/account/credential/account.credential.schema';
-import AccountInfoSchema, { AccountInfoModel } from '../../../schema/account/info/account.info.schema';
-import AccountSchema, { AccountModel } from '../../../schema/account/account.schema';
-import AccountTokenSchema, { AccountTokenModel } from '../../../schema/account/session/account.token.schema';
 import * as process from 'node:process';
+import { ConfigModule } from '@nestjs/config';
+import AccountCredentialSchema, { AccountCredentialModel } from '../schema/account/credential/account.credential.schema';
+import AccountInfoSchema, { AccountInfoModel } from '../schema/account/info/account.info.schema';
+import AccountSchema, { AccountModel } from '../schema/account/account.schema';
+import AccountTokenSchema, { AccountTokenModel } from '../schema/account/session/account.token.schema';
+import { SeedAccountSeeder } from './account/seed.account.seeder';
 
-@Module({
+seeder({
   imports: [
+    ConfigModule.forRoot(),
     MongooseModule.forRoot(`mongodb://${process.env.DKA_MONGO_HOST || '127.0.0.1'}:${process.env.DKA_MONGO_PORT || 27017}`, {
       auth: {
         username: `${process.env.DKA_MONGO_USERNAME || 'root'}`,
@@ -19,7 +20,7 @@ import * as process from 'node:process';
       replicaSet: `${process.env.DKA_MONGO_RS || 'rs0'}`,
       connectTimeoutMS: 2000,
       timeoutMS: 10000,
-      directConnection: process.env.DKA_MONGO_CONNECTION_DIRECT === 'true',
+      directConnection: true,
     }),
     MongooseModule.forFeature([
       { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },
@@ -28,7 +29,4 @@ import * as process from 'node:process';
       { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
     ]),
   ],
-  controllers: [AccountCredentialController],
-  providers: [AccountCredentialService],
-})
-export class AccountCredentialModule {}
+}).run([SeedAccountSeeder]);

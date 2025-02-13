@@ -14,6 +14,7 @@
     "postbuild": "javascript-obfuscator dist --output dist --config javascript-obfuscator.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "server": "ts-node test/createServerCert.ts",
+    "seed": "ts-node src/seeder/main.seeder.ts",
     "client": "ts-node test/createClientCert.ts",
     "ca": "ts-node test/createCACert.ts",
     "start": "nest start",
@@ -51,6 +52,7 @@
   },
   "devDependencies": {
     "@dkaframework/security": "^1.2.7",
+    "@faker-js/faker": "^9.5.0",
     "@grpc/grpc-js": "^1.12.5",
     "@grpc/proto-loader": "^0.7.13",
     "@grpc/reflection": "^1.0.4",
@@ -67,6 +69,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
+    "nestjs-seeder": "^0.3.2",
     "prettier": "^3.0.0",
     "protoc-gen-ts": "^0.8.7",
     "source-map-support": "^0.5.21",

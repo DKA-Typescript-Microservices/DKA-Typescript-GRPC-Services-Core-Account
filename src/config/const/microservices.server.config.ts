@@ -6,12 +6,12 @@ import { ServerCredentials } from '@grpc/grpc-js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const isServiceSecure = Boolean(process.env.DKA_SERVER_SECURE) && process.env.DKA_SERVER_SECURE !== 'false';
+const isServiceSecure = process.env.DKA_SERVER_SECURE === 'true';
 
 export const MicroservicesServerConfig: GrpcOptions = {
   transport: Transport.GRPC,
   options: {
-    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || (isServiceSecure ? 443 : 80))}`,
+    url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 8080)}`,
     package: ProtoArrayConfig.package,
     protoPath: ProtoArrayConfig.protoPath,
     credentials: isServiceSecure

@@ -192,6 +192,16 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 'credential.parent': 0,
               },
             },
+            {
+              $addFields: {
+                id: '$_id', // Buat field baru `id` dari `_id`
+              },
+            },
+            {
+              $project: {
+                _id: 0, // Hilangkan `_id`
+              },
+            },
           ]);
           if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.allowDiskUse !== undefined)
             query.allowDiskUse(payload.data.options.allowDiskUse);
