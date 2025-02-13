@@ -438,8 +438,8 @@ export class AccountCredentialService {
       //#########################################
 
       return jwtDecrypt(payload.data.token, createPrivateKey(privateKey), {
-        subject: 'refresh_token',
-        issuer: 'service-core-account',
+        issuer: `${process.env.REFRESH_TOKEN_ISSUER || 'service-core-account'}`,
+        subject: `${process.env.REFRESH_TOKEN_SUBJECT || 'refresh_token'}`,
       })
         .then((decodeData) => {
           this.token

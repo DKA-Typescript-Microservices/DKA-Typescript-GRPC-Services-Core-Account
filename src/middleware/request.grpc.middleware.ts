@@ -4,6 +4,8 @@ import { Status } from '@grpc/grpc-js/build/src/constants';
 import { RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
 import { AccountCredentialService } from '../module/account/credential/account.credential.service';
+import { Metadata } from '@grpc/grpc-js';
+import { Buffer } from 'buffer';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor {
@@ -14,7 +16,7 @@ export class RequestGrpcMiddleware implements NestInterceptor {
     //##########################################################################
     const rpcMethod = context.getHandler().name;
     const grpcContext = context.switchToRpc();
-    const ctx = grpcContext.getContext();
+    const ctx = grpcContext.getContext<Metadata>();
     const now = moment(moment.now());
     //##########################################################################
     const Authorization = ctx.get('Authorization')[0];
@@ -47,10 +49,9 @@ export class RequestGrpcMiddleware implements NestInterceptor {
         metadata: ctx,
         call: undefined,
       })
-      .then((result) => {
-        this.logger.verbose(result);
-        ctx.add('session', result);
-        ctx.add('request-time', now.toISOString(true));
+      .then((result: any) => {
+        ctx.add('session', result.data);
+        ctx.add('request-time', now.clone().toISOString(true));
         ctx.add('grpc-method', rpcMethod);
 
         return next.handle();
