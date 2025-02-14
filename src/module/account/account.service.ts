@@ -125,6 +125,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                       );
 
                       return query
+                        .allowDiskUse(true)
                         .exec()
                         .then(async (result) => {
                           this.logger.verbose(result);
@@ -174,7 +175,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     });
                 })
                 .catch(async (error) => {
-                  this.logger.verbose('step 2');
                   this.logger.error(JSON.stringify(error));
                   await session.abortTransaction();
                   await session.endSession();
@@ -186,7 +186,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 });
             })
             .catch(async (reason) => {
-              this.logger.verbose('step 1');
               this.logger.error(JSON.stringify(reason));
               await session.abortTransaction();
               await session.endSession();
@@ -306,7 +305,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           return query
             .exec()
             .then((result) => {
-              this.logger.verbose(result);
               if (result.length < 1)
                 return reject({
                   status: false,
@@ -613,13 +611,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           ]);
 
           return query
+            .allowDiskUse(true)
             .exec()
             .then(async (accountAccepted) => {
               const ListUser = accountAccepted.map((data) => data.id);
               const checkUserIsGranted = ListUser.some((data) => `${data}` === payload.data.query.id);
               const targetingDeletedUser = accountAccepted.find((data) => `${data.id}` === payload.data.query.id);
-              this.logger.verbose(accountAccepted);
-              this.logger.verbose(targetingDeletedUser);
               if (!checkUserIsGranted) {
                 return reject({
                   status: false,
@@ -682,7 +679,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
               return Promise.all<DeleteResult>(Array.from(mongooseQuery.values()))
                 .then(async (result) => {
-                  this.logger.verbose(result);
                   const filterSucceeded = result.filter((data) => data.deletedCount == 1);
                   if (filterSucceeded.length !== mongooseQuery.size) {
                     await session.abortTransaction();
@@ -694,7 +690,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                       details: 'Data Not Updated. may data is same old data. or not accepted',
                     });
                   }
-
                   await session.commitTransaction();
                   await session.endSession();
                   return resolve(targetingDeletedUser);
