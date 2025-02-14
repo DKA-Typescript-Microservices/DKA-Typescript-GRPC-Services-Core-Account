@@ -7,4 +7,4 @@ COPY . .
 RUN yarn install && yarn run build && yarn cache clean && rm -rf /root/.cache/yarn && rm -rf node_modules/.cache
 # Remove Source Code
 # remove src folder, Remove config json,
-RUN rm -rf src javascript-obfuscator.json nest-cli.json tsconfig**
+RUN rm -rf src javascript-obfuscator.json nest-cli.json tsconfig** .npmrc .yarnrc.yml

@@ -7,7 +7,7 @@ import { ProtoArrayConfig } from './config/const/proto.array.config';
 import { ServerCredentials } from '@grpc/grpc-js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { spawnSync, spawn } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { ReflectionService } from '@grpc/reflection';
 
 (async () => {

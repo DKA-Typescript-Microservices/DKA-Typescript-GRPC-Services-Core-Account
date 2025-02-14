@@ -10,6 +10,9 @@ docker-local: clean proto
 	# Remove container local if exists
 	docker buildx build -t ${REPOSITORY_NAME}:${TAG_NAME} --load .
 
+publish:
+	docker buildx build --platform linux/amd64,linux/386,linux/arm64/v8,linux/ppc64le,linux/riscv64 -t ${REPOSITORY_NAME}:${TAG_NAME} --push .
+
 load-prod:
 	docker compose -f compose.prod.yml up -d
 
