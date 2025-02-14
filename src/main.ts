@@ -14,8 +14,8 @@ import { ReflectionService } from '@grpc/reflection';
   const logger: Logger = new Logger('Services Runner');
 
   const isServiceSecure = process.env.DKA_SERVER_SECURE === 'true';
-  const rootPath = path.dirname(require.main.filename);
-  const sslPathDirectory = path.join(rootPath, './config/ssl');
+  const projectPath = path.join(`/var/tmp`, `account`);
+  const sslPathDirectory = path.join(projectPath, './config/ssl');
   const caPathDirectory = path.join(sslPathDirectory, 'ca');
   const serverPathDirectory = path.join(sslPathDirectory, 'server');
 
@@ -59,7 +59,7 @@ import { ReflectionService } from '@grpc/reflection';
   return NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
     transport: Transport.GRPC,
     options: {
-      url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || isServiceSecure ? 8080 : 80)}`,
+      url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || isServiceSecure ? 443 : 80)}`,
       package: ProtoArrayConfig.package,
       protoPath: ProtoArrayConfig.protoPath,
       credentials: serverCredential,

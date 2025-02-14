@@ -3,16 +3,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import * as process from 'node:process';
-import { internalIpV4 } from 'internal-ip';
 import { Logger } from '@nestjs/common';
-
 (async () => {
   const OpenSSL = new Security.OpenSSL();
 
   const logger: Logger = new Logger('Auto Certificate Security');
 
-  const caDir = path.join(require.main.path, '../config/ssl/ca');
-  const serverDir = path.join(require.main.path, '../config/ssl/server');
+  const projectPath = path.join(`/var/tmp`, `account`);
+  const caDir = path.join(projectPath, 'config/ssl/ca');
+  const serverDir = path.join(projectPath, 'config/ssl/server');
 
   if (!fs.existsSync(caDir)) {
     logger.error(`ca not exist please create first`);
@@ -34,7 +33,7 @@ import { Logger } from '@nestjs/common';
 
   if (!fs.existsSync(serverDir)) {
     logger.debug('Membuat Server Certificate directory');
-    fs.mkdirSync(serverDir, { recursive: true, mode: 0o775 });
+    fs.mkdirSync(serverDir, { recursive: true, mode: 0o777 });
   }
 
   logger.debug(`Create a Server Certificate ....`);
@@ -62,7 +61,7 @@ import { Logger } from '@nestjs/common';
             { type: 7, ip: '127.0.0.1' },
             { type: 2, value: 'localhost' },
             { type: 2, value: `${os.hostname()}` },
-            { type: 7, ip: `${await internalIpV4()}` },
+            { type: 7, ip: `${await (await import('internal-ip')).internalIpV4()}` },
           ],
         },
       ],

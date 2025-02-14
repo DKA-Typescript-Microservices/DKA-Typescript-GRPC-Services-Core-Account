@@ -10,10 +10,11 @@ import { Logger } from '@nestjs/common';
   const SSL = new OpenSSL();
   const logger: Logger = new Logger('Auto Certificate Security');
 
-  const caDir = path.join(require.main.path, '../config/ssl/ca');
+  const projectPath = path.join(`/var/tmp`, `account`);
+  const caDir = path.join(projectPath, 'config/ssl/ca');
 
   if (!fs.existsSync(caDir)) {
-    fs.mkdirSync(caDir, { recursive: true, mode: 0o775 });
+    fs.mkdirSync(caDir, { recursive: true, mode: 0o777 });
   }
 
   logger.debug(`Create a CA Certificate ....`);

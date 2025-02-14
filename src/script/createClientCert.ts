@@ -8,8 +8,9 @@ import { Logger } from '@nestjs/common';
 (async () => {
   const OpenSSL = new Security.OpenSSL();
   const logger: Logger = new Logger('Auto Certificate Security');
-  const caDir = path.join(require.main.path, '../config/ssl/ca');
-  const clientDir = path.join(require.main.path, '../config/ssl/client');
+  const projectPath = path.join(`/var/tmp`, `account`);
+  const caDir = path.join(projectPath, 'config/ssl/ca');
+  const clientDir = path.join(projectPath, 'config/ssl/client');
 
   if (!fs.existsSync(caDir)) {
     logger.error(`ca not exist please create first`);
@@ -31,7 +32,7 @@ import { Logger } from '@nestjs/common';
 
   if (!fs.existsSync(clientDir)) {
     logger.debug('Membuat Client Certificate directory');
-    fs.mkdirSync(clientDir, { recursive: true, mode: 0o775 });
+    fs.mkdirSync(clientDir, { recursive: true, mode: 0o777 });
   }
 
   logger.debug(`Create a Client Certificate ....`);

@@ -37,10 +37,8 @@ export class AccountCredentialService {
 
   async Authorize(payload: { data: AccountAuthorizeRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
     return new Promise(async (resolve, reject) => {
-      const rootDirectory = path.dirname(require.main.filename);
-      const pathRelativeOfServerSSL = './config/ssl/server';
-
-      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+      const projectPath = path.join(`/var/tmp`, `account`);
+      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
 
       if (!fs.existsSync(pathOfServerSSL)) {
         fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
@@ -213,10 +211,8 @@ export class AccountCredentialService {
 
   async verifyToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
-      const rootDirectory = path.dirname(require.main.filename);
-      const pathRelativeOfServerSSL = './config/ssl/server';
-
-      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+      const projectPath = path.join(`/var/tmp`, `${name}`);
+      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
 
       if (!fs.existsSync(pathOfServerSSL)) {
         fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
@@ -399,10 +395,9 @@ export class AccountCredentialService {
 
   async refreshToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
     return new Promise(async (resolve, reject) => {
-      const rootDirectory = path.dirname(require.main.filename);
-      const pathRelativeOfServerSSL = './config/ssl/server';
+      const projectPath = path.join(`/var/tmp`, `${name}`);
 
-      const pathOfServerSSL = path.join(rootDirectory, pathRelativeOfServerSSL);
+      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
 
       if (!fs.existsSync(pathOfServerSSL)) {
         fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
