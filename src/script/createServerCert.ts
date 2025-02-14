@@ -1,15 +1,21 @@
 import Security from '@dkaframework/security';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as os from 'node:os';
+import * as process from 'node:process';
+import { internalIpV4 } from 'internal-ip';
+import { Logger } from '@nestjs/common';
 
 (async () => {
   const OpenSSL = new Security.OpenSSL();
+
+  const logger: Logger = new Logger('Auto Certificate Security');
 
   const caDir = path.join(require.main.path, '../config/ssl/ca');
   const serverDir = path.join(require.main.path, '../config/ssl/server');
 
   if (!fs.existsSync(caDir)) {
-    console.error(`ca not exist please create first`);
+    logger.error(`ca not exist please create first`);
     return process.exit(1);
   }
 
@@ -17,27 +23,27 @@ import * as path from 'node:path';
   const caKeyFile = path.join(caDir, './private.key');
 
   if (!fs.existsSync(caCertFile)) {
-    console.error(`ca file certificate is not exist`);
+    logger.error(`ca file certificate is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(caKeyFile)) {
-    console.error(`ca file Key is not exist`);
+    logger.error(`ca file Key is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(serverDir)) {
-    console.debug('Membuat Server Certificate directory');
+    logger.debug('Membuat Server Certificate directory');
     fs.mkdirSync(serverDir, { recursive: true, mode: 0o775 });
   }
 
-  console.debug(`Create a Server Certificate ....`);
+  logger.debug(`Create a Server Certificate ....`);
 
   const CACert = fs.readFileSync(caCertFile, 'utf-8');
   const CAKey = fs.readFileSync(caKeyFile, 'utf-8');
 
   await OpenSSL.generateCert(
-    { privateKey: CAKey, certificate: CACert, passphrase: '@Thedarkangels2010' },
+    { privateKey: CAKey, certificate: CACert, passphrase: `${process.env.DKA_SECURITY_PASSPHRASE || os.hostname()}` },
     {
       subject: [
         { name: 'countryName', value: 'ID' },
@@ -55,6 +61,8 @@ import * as path from 'node:path';
           altNames: [
             { type: 7, ip: '127.0.0.1' },
             { type: 2, value: 'localhost' },
+            { type: 2, value: `${os.hostname()}` },
+            { type: 7, ip: `${await internalIpV4()}` },
           ],
         },
       ],
@@ -76,9 +84,9 @@ import * as path from 'node:path';
       fs.writeFileSync(path.join(serverDir, './private.key'), Buffer.from(result.keys.privateKey));
       fs.writeFileSync(path.join(serverDir, './public.key'), Buffer.from(result.keys.publicKey));
       fs.writeFileSync(path.join(serverDir, './server.crt'), Buffer.from(result.certificate));
-      console.debug(`Create Server Certificate Is succeed`);
+      logger.debug(`Create Server Certificate Is succeed`);
     })
     .catch((error) => {
-      console.error(error);
+      logger.error(error);
     });
 })();

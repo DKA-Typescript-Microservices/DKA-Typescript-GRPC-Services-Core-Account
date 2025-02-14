@@ -2,9 +2,13 @@ import { OpenSSL } from '@dkaframework/security';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { md } from 'node-forge';
+import * as process from 'node:process';
+import * as os from 'node:os';
+import { Logger } from '@nestjs/common';
 
 (async () => {
   const SSL = new OpenSSL();
+  const logger: Logger = new Logger('Auto Certificate Security');
 
   const caDir = path.join(require.main.path, '../config/ssl/ca');
 
@@ -12,14 +16,14 @@ import { md } from 'node-forge';
     fs.mkdirSync(caDir, { recursive: true, mode: 0o775 });
   }
 
-  console.debug(`Create a CA Certificate ....`);
+  logger.debug(`Create a CA Certificate ....`);
 
   await SSL.generateCA({
     keys: SSL.generateKey({
       privateKeyEncoding: {
         type: 'pkcs8',
         format: 'pem',
-        passphrase: '@Thedarkangels2010',
+        passphrase: `${process.env.DKA_SECURITY_PASSPHRASE || os.hostname()}`,
         cipher: 'aes-256-cbc',
       },
       publicKeyEncoding: {
@@ -38,7 +42,7 @@ import { md } from 'node-forge';
       { name: 'streetAddress', value: 'Jl. Satando Raya No 4' },
     ],
     options: {
-      passphrase: '@Thedarkangels2010',
+      passphrase: `${process.env.DKA_SECURITY_PASSPHRASE || os.hostname()}`,
       expiresYears: 20,
       digest: md.sha256.create(),
       extensions: [
@@ -75,9 +79,9 @@ import { md } from 'node-forge';
     .then((res) => {
       fs.writeFileSync(path.join(caDir, './private.key'), Buffer.from(res.keys.privateKey));
       fs.writeFileSync(path.join(caDir, './ca.crt'), Buffer.from(res.certificate));
-      console.debug(`Create CA Certificate Is succeed`);
+      logger.debug(`Create CA Certificate Is succeed`);
     })
     .catch((error) => {
-      console.error(error);
+      logger.error(error);
     });
 })();

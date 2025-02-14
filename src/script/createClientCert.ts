@@ -1,14 +1,18 @@
 import Security from '@dkaframework/security';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as process from 'node:process';
+import * as os from 'node:os';
+import { Logger } from '@nestjs/common';
 
 (async () => {
   const OpenSSL = new Security.OpenSSL();
+  const logger: Logger = new Logger('Auto Certificate Security');
   const caDir = path.join(require.main.path, '../config/ssl/ca');
   const clientDir = path.join(require.main.path, '../config/ssl/client');
 
   if (!fs.existsSync(caDir)) {
-    console.error(`ca not exist please create first`);
+    logger.error(`ca not exist please create first`);
     return process.exit(1);
   }
 
@@ -16,27 +20,27 @@ import * as path from 'node:path';
   const caKeyFile = path.join(caDir, './private.key');
 
   if (!fs.existsSync(caCertFile)) {
-    console.error(`ca file certificate is not exist`);
+    logger.error(`ca file certificate is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(caKeyFile)) {
-    console.error(`ca file Key is not exist`);
+    logger.error(`ca file Key is not exist`);
     return process.exit(1);
   }
 
   if (!fs.existsSync(clientDir)) {
-    console.debug('Membuat Client Certificate directory');
+    logger.debug('Membuat Client Certificate directory');
     fs.mkdirSync(clientDir, { recursive: true, mode: 0o775 });
   }
 
-  console.debug(`Create a Client Certificate ....`);
+  logger.debug(`Create a Client Certificate ....`);
 
   const CACert = fs.readFileSync(caCertFile, 'utf-8');
   const CAKey = fs.readFileSync(caKeyFile, 'utf-8');
 
   await OpenSSL.generateCert(
-    { privateKey: CAKey, certificate: CACert, passphrase: '@Thedarkangels2010' },
+    { privateKey: CAKey, certificate: CACert, passphrase: `${process.env.DKA_SECURITY_PASSPHRASE || os.hostname()}` },
     {
       subject: [
         { name: 'countryName', value: 'ID' },
@@ -64,9 +68,9 @@ import * as path from 'node:path';
     .then((result) => {
       fs.writeFileSync(path.join(clientDir, './private.key'), Buffer.from(result.keys.privateKey));
       fs.writeFileSync(path.join(clientDir, './client.crt'), Buffer.from(result.certificate));
-      console.debug(`Create Client Certificate Is succeed`);
+      logger.debug(`Create Client Certificate Is succeed`);
     })
     .catch((error) => {
-      console.error(error);
+      logger.error(error);
     });
 })();

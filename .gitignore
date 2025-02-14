@@ -5,6 +5,7 @@
 yarn.lock
 # Logs
 logs
+prod
 *.log
 npm-debug.log*
 pnpm-debug.log*

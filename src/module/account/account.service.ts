@@ -128,7 +128,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                         .allowDiskUse(true)
                         .exec()
                         .then(async (result) => {
-                          this.logger.verbose(result);
                           if (result.length < 1) {
                             await session.abortTransaction();
                             await session.endSession();
@@ -136,7 +135,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                               status: false,
                               code: Status.NOT_FOUND,
                               msg: `Data Not Found. Rollback...`,
-                              error: `Data Not Found. Rollback`,
+                              error: `Data Not Found. Rollback ...`,
                             });
                           }
 
@@ -149,8 +148,10 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                             data: result[0],
                           });
                         })
-                        .catch((error) => {
+                        .catch(async (error) => {
                           this.logger.error(error);
+                          await session.abortTransaction();
+                          await session.endSession();
                           return reject({
                             status: false,
                             code: Status.ABORTED,
@@ -160,7 +161,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                         });
                     })
                     .catch(async (error) => {
-                      this.logger.verbose('step 3');
                       this.logger.error(JSON.stringify(error));
                       await session.abortTransaction();
                       await session.endSession();

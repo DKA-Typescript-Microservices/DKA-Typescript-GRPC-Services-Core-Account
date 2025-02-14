@@ -1,4 +1,4 @@
-REPOSITORY_NAME=dka/services
+REPOSITORY_NAME=yovanggaanandhika/services
 TAG_NAME=core-account
 
 # default
@@ -8,8 +8,10 @@ dev: clean proto
 # Compile Dockerfile to image load
 docker-local: clean proto
 	# Remove container local if exists
-	docker compose down app
 	docker buildx build -t ${REPOSITORY_NAME}:${TAG_NAME} --load .
+
+load-prod:
+	docker compose -f compose.prod.yml up -d
 
 load-dev:
 	docker run -d --network dka-dev --name dka-services-${TAG_NAME}-app -p 443:443 -e DKA_SERVER_SECURE=true -e DKA_MONGO_HOST=dka-services-core-account-mongo ${REPOSITORY_NAME}:${TAG_NAME}
