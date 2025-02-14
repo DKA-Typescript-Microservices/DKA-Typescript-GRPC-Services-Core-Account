@@ -7,12 +7,17 @@ services:
     hostname: dka-services-core-account-app
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
+      DKA_SERVER_CERT_ALT_NAMES: dns1.dkaapis.com,dns2.dkaapis.com
       DKA_SERVER_SECURE: true
     ports:
       - target: 443
         published: 443
         protocol: tcp
         host_ip: 0.0.0.0
+    volumes:
+      - type: bind
+        source: /var/tmp/account
+        target: /var/tmp/account
     deploy:
       resources:
         reservations:

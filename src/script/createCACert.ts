@@ -14,7 +14,7 @@ import { Logger } from '@nestjs/common';
   const caDir = path.join(projectPath, 'config/ssl/ca');
 
   if (!fs.existsSync(caDir)) {
-    fs.mkdirSync(caDir, { recursive: true, mode: 0o777 });
+    fs.mkdirSync(caDir, { recursive: true, mode: 0o644 });
   }
 
   logger.debug(`Create a CA Certificate ....`);
@@ -78,8 +78,8 @@ import { Logger } from '@nestjs/common';
     },
   })
     .then((res) => {
-      fs.writeFileSync(path.join(caDir, './private.key'), Buffer.from(res.keys.privateKey));
-      fs.writeFileSync(path.join(caDir, './ca.crt'), Buffer.from(res.certificate));
+      fs.writeFileSync(path.join(caDir, './private.key'), Buffer.from(res.keys.privateKey), { mode: 0o600 });
+      fs.writeFileSync(path.join(caDir, './ca.crt'), Buffer.from(res.certificate), { mode: 0o644 });
       logger.debug(`Create CA Certificate Is succeed`);
     })
     .catch((error) => {

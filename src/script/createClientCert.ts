@@ -32,7 +32,7 @@ import { Logger } from '@nestjs/common';
 
   if (!fs.existsSync(clientDir)) {
     logger.debug('Membuat Client Certificate directory');
-    fs.mkdirSync(clientDir, { recursive: true, mode: 0o777 });
+    fs.mkdirSync(clientDir, { recursive: true, mode: 0o644 });
   }
 
   logger.debug(`Create a Client Certificate ....`);
@@ -48,8 +48,8 @@ import { Logger } from '@nestjs/common';
         { name: 'stateOrProvinceName', value: 'Sulawesi Selatan' },
         { name: 'localityName', value: 'Makassar' },
         { name: 'organizationName', value: 'DKA Research Center' },
-        { name: 'organizationalUnitName', value: 'DKA Certificate' },
-        { name: 'commonName', value: 'client' },
+        { name: 'organizationalUnitName', value: 'DKA Microservices Client' },
+        { name: 'commonName', value: `${os.hostname()}` },
       ],
       extensions: [{ name: 'nsCertType', client: true }],
       expiresYears: 10,
@@ -67,8 +67,8 @@ import { Logger } from '@nestjs/common';
     },
   )
     .then((result) => {
-      fs.writeFileSync(path.join(clientDir, './private.key'), Buffer.from(result.keys.privateKey));
-      fs.writeFileSync(path.join(clientDir, './client.crt'), Buffer.from(result.certificate));
+      fs.writeFileSync(path.join(clientDir, './private.key'), Buffer.from(result.keys.privateKey), { mode: 0o644 });
+      fs.writeFileSync(path.join(clientDir, './client.crt'), Buffer.from(result.certificate), { mode: 0o644 });
       logger.debug(`Create Client Certificate Is succeed`);
     })
     .catch((error) => {
