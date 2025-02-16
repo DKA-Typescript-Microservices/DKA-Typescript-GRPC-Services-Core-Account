@@ -14,7 +14,7 @@ pull:
 	docker pull ${REPOSITORY_NAME}:${TAG_NAME}
 
 publish:
-	docker buildx build --platform linux/amd64,linux/386 -t ${REPOSITORY_NAME}:${TAG_NAME} --push .
+	docker buildx build --progress=plain --platform linux/amd64,linux/386 -t ${REPOSITORY_NAME}:${TAG_NAME} --push .
 
 load-prod:
 	docker compose -f compose.prod.yml up -d

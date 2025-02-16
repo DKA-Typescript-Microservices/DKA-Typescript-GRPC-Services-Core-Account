@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AccountAuthorizeRequest, AccountAuthorizeResponse, AccountVerifyTokenRequest, IAccount } from '../../../model/proto/account/account.grpc';
 import { Metadata, ServerUnaryCall, status } from '@grpc/grpc-js';
 import * as path from 'node:path';
@@ -6,8 +6,6 @@ import * as fs from 'node:fs';
 import mongoose, { Connection, ConnectionStates, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { AccountModel } from '../../../schema/account/account.schema';
-import { AccountInfoModel } from '../../../schema/account/info/account.info.schema';
-import { IAccountInfo } from '../../../model/database/account/info/account.info.model';
 import { AccountCredentialModel } from '../../../schema/account/credential/account.credential.schema';
 import { IAccountCredential } from '../../../model/database/account/credential/account.credential.model';
 import { AccountTokenModel } from '../../../schema/account/session/account.token.schema';
@@ -19,32 +17,35 @@ import { Status } from '@grpc/grpc-js/build/src/constants';
 import { createPublicKey } from 'crypto';
 import { createPrivateKey } from 'node:crypto';
 import { DurationInputArg2 } from 'moment';
+import * as os from 'node:os';
+import { spawnSync } from 'child_process';
 
 @Injectable()
-export class AccountCredentialService {
+export class AccountCredentialService implements OnModuleInit {
   private readonly logger: Logger = new Logger(this.constructor.name);
   @InjectConnection()
   private readonly connection: Connection;
   @InjectModel(AccountModel.modelName)
   private readonly account: Model<IAccount>;
-  @InjectModel(AccountInfoModel.modelName)
-  private readonly info: Model<IAccountInfo>;
   @InjectModel(AccountCredentialModel.modelName)
   private readonly credential: Model<IAccountCredential>;
-
   @InjectModel(AccountTokenModel.modelName)
   private readonly token: Model<IAccountToken>;
+  private KeyPath = path.join(`/var/tmp`, `${os.hostname()}`);
+
+  async onModuleInit() {
+    if (!fs.existsSync(this.KeyPath)) {
+      this.logger.verbose(`Create Directory SSL for Encryption Token ...`);
+      fs.mkdirSync(this.KeyPath, { recursive: true, mode: 0o755 });
+      this.logger.log('Creating RSA Private Key & RSA Public Key For Encryption Token...');
+      spawnSync('openssl', ['genpkey', '-algorithm', 'RSA', '-out', path.join(this.KeyPath, 'privkey.pem'), '-pkeyopt', 'rsa_keygen_bits:8192'], { stdio: 'inherit' });
+      spawnSync('openssl', ['rsa', '-in', path.join(this.KeyPath, 'privkey.pem'), '-pubout', '-out', path.join(this.KeyPath, 'pubkey.pem')], { stdio: 'inherit' });
+    }
+  }
 
   async Authorize(payload: { data: AccountAuthorizeRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
     return new Promise(async (resolve, reject) => {
-      const projectPath = path.join(`/var/tmp`, `account`);
-      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
-
-      if (!fs.existsSync(pathOfServerSSL)) {
-        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
-      }
-
-      if (!fs.existsSync(path.join(pathOfServerSSL, './public.key')))
+      if (!fs.existsSync(path.join(this.KeyPath, './pubkey.pem')))
         return reject({
           status: false,
           code: Status.INTERNAL,
@@ -52,7 +53,7 @@ export class AccountCredentialService {
           details: 'Please Create A SSL Public Key Encrypted.',
         });
 
-      const publicKey = fs.readFileSync(path.join(pathOfServerSSL, './public.key'));
+      const publicKey = fs.readFileSync(path.join(this.KeyPath, './pubkey.pem'));
 
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -211,14 +212,7 @@ export class AccountCredentialService {
 
   async verifyToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
-      const projectPath = path.join(`/var/tmp`, `${name}`);
-      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
-
-      if (!fs.existsSync(pathOfServerSSL)) {
-        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
-      }
-
-      if (!fs.existsSync(path.join(pathOfServerSSL, './private.key')))
+      if (!fs.existsSync(path.join(this.KeyPath, './privkey.pem')))
         return reject({
           status: false,
           code: Status.INTERNAL,
@@ -226,11 +220,11 @@ export class AccountCredentialService {
           details: 'Please Create A SSL Private Key Decrypted.',
         });
 
-      const privateKey = fs.readFileSync(path.join(pathOfServerSSL, './private.key'));
+      const privateKey = fs.readFileSync(path.join(this.KeyPath, './privkey.pem'));
 
       return jwtDecrypt(payload.data.token, createPrivateKey(privateKey), {
-        subject: 'access_token',
-        issuer: 'service-core-account',
+        subject: `${process.env.ACCESS_TOKEN_SUBJECT || 'access_token'}`,
+        issuer: `${process.env.ACCESS_TOKEN_ISSUER || 'service-core-account'}`,
       })
         .then(({ payload }) => {
           return resolve(payload as IAccount);
@@ -395,15 +389,7 @@ export class AccountCredentialService {
 
   async refreshToken(payload: { data: AccountVerifyTokenRequest; metadata: Metadata; call: ServerUnaryCall<any, any> }): Promise<AccountAuthorizeResponse> {
     return new Promise(async (resolve, reject) => {
-      const projectPath = path.join(`/var/tmp`, `${name}`);
-
-      const pathOfServerSSL = path.join(projectPath, 'config/ssl/server');
-
-      if (!fs.existsSync(pathOfServerSSL)) {
-        fs.mkdirSync(pathOfServerSSL, { recursive: true, mode: 0o755 });
-      }
-
-      if (!fs.existsSync(path.join(pathOfServerSSL, './private.key')))
+      if (!fs.existsSync(path.join(this.KeyPath, './privkey.pem')))
         return reject({
           status: false,
           code: Status.INTERNAL,
@@ -411,7 +397,7 @@ export class AccountCredentialService {
           details: 'Please Create A SSL Private Key Decrypted.',
         });
 
-      if (!fs.existsSync(path.join(pathOfServerSSL, './public.key')))
+      if (!fs.existsSync(path.join(this.KeyPath, './pubkey.pem')))
         return reject({
           status: false,
           code: Status.INTERNAL,
@@ -419,8 +405,8 @@ export class AccountCredentialService {
           details: 'Please Create A SSL Public Key Encrypted.',
         });
 
-      const privateKey = fs.readFileSync(path.join(pathOfServerSSL, './private.key'));
-      const publicKey = fs.readFileSync(path.join(pathOfServerSSL, './public.key'));
+      const privateKey = fs.readFileSync(path.join(this.KeyPath, './privkey.pem'));
+      const publicKey = fs.readFileSync(path.join(this.KeyPath, './pubkey.pem'));
 
       //#########################################
       const timeNow = moment(moment.now());
