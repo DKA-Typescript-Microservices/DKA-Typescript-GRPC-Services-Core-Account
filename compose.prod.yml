@@ -7,11 +7,7 @@ services:
     hostname: account.core.services.dkaapis.com
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
-      DKA_SERVER_SECURE: true
-    volumes:
-      - type: volume
-        source: ssl
-        target: /etc/letsencrypt
+      DKA_SERVER_SECURE: false
     ports:
       - target: 80
         published: 80
@@ -53,8 +49,6 @@ services:
       - dka-dev
 
 volumes:
-  ssl:
-    driver: local
   mongo:
     driver: local
 
