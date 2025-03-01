@@ -1,6 +1,7 @@
 FROM yovanggaanandhika/node:latest
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
+RUN apk add --no-cache protobuf
 # Copy Source
 COPY . .
 # yarn install
