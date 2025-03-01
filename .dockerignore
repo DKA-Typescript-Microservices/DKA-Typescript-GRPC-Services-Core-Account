@@ -6,6 +6,7 @@ dist
 .env
 .env.example
 .gitmodules
+.github
 .gitignore
 Makefile
 compose.prod.yml
