@@ -1,7 +1,7 @@
 FROM yovanggaanandhika/node:latest
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
-RUN apk add --no-cache protobuf-dev libc6-compat
+RUN apk add --no-cache protobuf-dev
 # Copy Source
 COPY . .
 # yarn install
