@@ -38,6 +38,6 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/386,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ secrets.DKA_DOCKER_USERNAME }}/${{ secrets.DKA_DOCKER_REPO }}:${{ env.TAG_NAME }}
