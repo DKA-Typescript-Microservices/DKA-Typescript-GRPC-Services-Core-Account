@@ -1,5 +1,5 @@
 REPOSITORY_NAME=yovanggaanandhika/services
-TAG_NAME=core-account
+TAG_NAME=grpc-core-account
 
 # default
 # For Development

@@ -1,8 +1,6 @@
 FROM yovanggaanandhika/node:latest
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
-# Install Certbot
-RUN apk add --no-cache certbot certbot-dns-cloudflare
 # Copy Source
 COPY . .
 # yarn install
