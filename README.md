@@ -27,8 +27,8 @@
 
 ----------------------------------------
 
-For Running Locally Read [ Running Localy ](/MD/install/MANUALLY-INSTALL.md)
-For Running With Docker Read [ Running With Docker Without DB ](/MD/install/DOCKER-INDEPEDENT.md)
+* For Running Locally Read [ Running Localy ](/MD/install/MANUALLY-INSTALL.md)
+* For Running With Docker Read [ Running With Docker Without DB ](/MD/install/DOCKER-INDEPEDENT.md)
 
 -----------------------------------------
 
