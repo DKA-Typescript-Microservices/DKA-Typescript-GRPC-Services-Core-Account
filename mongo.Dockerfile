@@ -2,6 +2,7 @@ FROM yovanggaanandhika/mongo:12-slim-mongo-node-8.0.5
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 RUN apt update && apt install -y protobuf-compiler
+ENV DKA_REPL_ENABLED=true
 # Copy Source
 COPY . .
 # yarn install
