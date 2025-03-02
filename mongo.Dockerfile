@@ -1,7 +1,7 @@
 FROM yovanggaanandhika/mongo:12-slim-mongo-node-8.0.5
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
-RUN apt install -y protobuf-compiler
+RUN apt update && apt install -y protobuf-compiler
 # Copy Source
 COPY . .
 # yarn install
