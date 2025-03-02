@@ -6,7 +6,7 @@ import { AccountInfoModel } from '../../schema/account/info/account.info.schema'
 import { IAccountInfo } from '../../model/database/account/info/account.info.model';
 import { AccountCredentialModel } from '../../schema/account/credential/account.credential.schema';
 import { IAccountCredential } from '../../model/database/account/credential/account.credential.model';
-import { Metadata, ServerUnaryCall, status } from '@grpc/grpc-js';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
   AccountCreateRequest,
@@ -143,7 +143,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                           await session.endSession();
                           return resolve({
                             status: true,
-                            code: status.OK,
+                            code: Status.OK,
                             msg: `Successfully Create Data`,
                             data: result[0],
                           });
@@ -166,7 +166,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                       await session.endSession();
                       return reject({
                         status: false,
-                        code: status.ABORTED,
+                        code: Status.ABORTED,
                         msg: error,
                       });
                     })
@@ -180,7 +180,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   await session.endSession();
                   return reject({
                     status: false,
-                    code: status.ABORTED,
+                    code: Status.ABORTED,
                     msg: error,
                   });
                 });
@@ -191,20 +191,20 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               await session.endSession();
               return reject({
                 status: false,
-                code: status.FAILED_PRECONDITION,
+                code: Status.FAILED_PRECONDITION,
                 msg: reason,
               });
             });
         case ConnectionStates.disconnected:
           return reject({
             status: false,
-            code: status.UNAVAILABLE,
+            code: Status.UNAVAILABLE,
             msg: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
           return reject({
             status: false,
-            code: status.UNKNOWN,
+            code: Status.UNKNOWN,
             msg: 'An unexpected error occurred. Please try again later.',
             details: `The development team is investigating the issue.`,
           });
@@ -335,14 +335,14 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         case ConnectionStates.disconnected:
           return reject({
             status: false,
-            code: status.UNAVAILABLE,
+            code: Status.UNAVAILABLE,
             msg: 'Database is unavailable at the moment. Please try again later.',
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
           return reject({
             status: false,
-            code: status.UNKNOWN,
+            code: Status.UNKNOWN,
             msg: 'An internal server error occurred. Please try again later.',
             details: 'A system error was encountered. The development team is investigating.',
           });
@@ -394,7 +394,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               if (!checkUserIsGranted) {
                 return reject({
                   status: false,
-                  code: status.UNAUTHENTICATED,
+                  code: Status.UNAUTHENTICATED,
                   msg: 'Your Account Not Granted to Update This Data',
                   details: 'Your Account Not Granted to Update This Data. Check Your Permission',
                 });
@@ -444,7 +444,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     await session.endSession();
                     return reject({
                       status: false,
-                      code: status.RESOURCE_EXHAUSTED,
+                      code: Status.RESOURCE_EXHAUSTED,
                       msg: 'Data Not Updated. Failed To Update',
                       details: 'Data Not Updated. may data is same old data. or not accepted',
                     });
@@ -467,7 +467,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                           this.logger.error(JSON.stringify(error));
                           return reject({
                             status: false,
-                            code: status.FAILED_PRECONDITION,
+                            code: Status.FAILED_PRECONDITION,
                             msg: 'Failed To get new Data ',
                             details: 'Failed To get new Data',
                           });
@@ -477,7 +477,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                       this.logger.error(error);
                       return reject({
                         status: false,
-                        code: status.INTERNAL,
+                        code: Status.INTERNAL,
                         msg: 'Failed To Commit or close transaction',
                         details: 'Failed To Commit or close transaction',
                       });
@@ -489,7 +489,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   await session.endSession();
                   return reject({
                     status: false,
-                    code: status.INTERNAL,
+                    code: Status.INTERNAL,
                     msg: 'Failed To Promise Task',
                     details: 'Failed To Promise Task',
                   });
@@ -499,7 +499,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               this.logger.error(JSON.stringify(error));
               return reject({
                 status: false,
-                code: status.UNAVAILABLE,
+                code: Status.UNAVAILABLE,
                 msg: 'Failed To Get Previleged Read Child Account',
                 details: 'Failed To Get Previleged Read Child Account.',
               });
@@ -507,14 +507,14 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         case ConnectionStates.disconnected:
           return reject({
             status: false,
-            code: status.UNAVAILABLE,
+            code: Status.UNAVAILABLE,
             msg: 'Database is unavailable at the moment. Please try again later.',
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
           return reject({
             status: false,
-            code: status.UNKNOWN,
+            code: Status.UNKNOWN,
             msg: 'An internal server error occurred. Please try again later.',
             details: 'A system error was encountered. The development team is investigating.',
           });
@@ -620,7 +620,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               if (!checkUserIsGranted) {
                 return reject({
                   status: false,
-                  code: status.UNAUTHENTICATED,
+                  code: Status.UNAUTHENTICATED,
                   msg: 'Your Account Not Granted to Update This Data',
                   details: 'Your Account Not Granted to Update This Data. Check Your Permission',
                 });
@@ -629,7 +629,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               if (authData.id == payload.data.query.id)
                 return reject({
                   status: false,
-                  code: status.UNAVAILABLE,
+                  code: Status.UNAVAILABLE,
                   msg: 'You Cannot Delete Account Same With This Account',
                   details: 'You Cannot Delete Account Same With This Account. Please Relogin Your Administrator',
                 });
@@ -685,7 +685,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     await session.endSession();
                     return reject({
                       status: false,
-                      code: status.RESOURCE_EXHAUSTED,
+                      code: Status.RESOURCE_EXHAUSTED,
                       msg: 'Data Not Updated. Failed To Update',
                       details: 'Data Not Updated. may data is same old data. or not accepted',
                     });
@@ -700,7 +700,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   await session.endSession();
                   return reject({
                     status: false,
-                    code: status.INTERNAL,
+                    code: Status.INTERNAL,
                     msg: 'Failed To Promise Task',
                     details: 'Failed To Promise Task',
                   });
@@ -710,7 +710,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               this.logger.error(JSON.stringify(error));
               return reject({
                 status: false,
-                code: status.UNAVAILABLE,
+                code: Status.UNAVAILABLE,
                 msg: 'Failed To Get Previleged Read Child Account',
                 details: 'Failed To Get Previleged Read Child Account.',
               });
@@ -718,14 +718,14 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
         case ConnectionStates.disconnected:
           return reject({
             status: false,
-            code: status.UNAVAILABLE,
+            code: Status.UNAVAILABLE,
             msg: 'Database is unavailable at the moment. Please try again later.',
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
           return reject({
             status: false,
-            code: status.UNKNOWN,
+            code: Status.UNKNOWN,
             msg: 'An internal server error occurred. Please try again later.',
             details: 'A system error was encountered. The development team is investigating.',
           });
