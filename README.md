@@ -29,18 +29,14 @@
 
 * For Running Locally Read [ Running Localy ](/MD/install/MANUALLY-INSTALL.md)
 * For Running With Docker Read [ Running With Docker Without DB ](/MD/install/DOCKER-INDEPEDENT.md)
+* For Running With Docker Read [ Running With Docker Embed DB / Single Image ](/MD/install/DOCKER-EMBBED-MONGO.md)
 
 -----------------------------------------
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Nest is an MIT-licensed open source project. 
+And Coder By Yovangga Anandhika Hadi Putra
 
 ## License
 
