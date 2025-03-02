@@ -27,7 +27,8 @@
 
 ----------------------------------------
 
-run locally read [ Running Localy ](https://github.com/DKA-Typescript-Microservices/DKA-Typescript-GRPC-Services-Core-Account/MD/install/MANUALLY-INSTALL.md)
+For Running Locally Read [ Running Localy ](/MD/install/MANUALLY-INSTALL.md)
+For Running With Docker Read [ Running With Docker Without DB ](/MD/install/DOCKER-INDEPEDENT.md)
 
 -----------------------------------------
 
