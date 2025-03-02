@@ -453,36 +453,28 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     });
                   }
 
-                  return Promise.all([session.commitTransaction(), session.endSession()])
-                    .then(async () => {
-                      return this.account
-                        .findOne({ _id: payload.data.query.id })
-                        .populate('info')
-                        .populate('credential')
-                        .lean()
-                        .exec()
-                        .then(async (resultGet) => {
-                          resultGet.id = resultGet._id.toString(); // Set the `id` field
-                          delete resultGet._id; // Remove the original _id field
-                          return resolve(resultGet);
-                        })
-                        .catch(async (error) => {
-                          this.logger.error(JSON.stringify(error));
-                          return reject({
-                            status: false,
-                            code: Status.FAILED_PRECONDITION,
-                            msg: 'Failed To get new Data ',
-                            details: 'Failed To get new Data',
-                          });
-                        });
+                  return this.account
+                    .findOne({ _id: payload.data.query.id })
+                    .populate('info')
+                    .populate('credential')
+                    .lean()
+                    .exec()
+                    .then(async (resultGet) => {
+                      resultGet.id = resultGet._id.toString(); // Set the `id` field
+                      delete resultGet._id; // Remove the original _id field
+                      await session.commitTransaction();
+                      await session.endSession();
+                      return resolve(resultGet);
                     })
-                    .catch((error) => {
-                      this.logger.error(error);
+                    .catch(async (error) => {
+                      this.logger.error(JSON.stringify(error));
+                      await session.abortTransaction();
+                      await session.endSession();
                       return reject({
                         status: false,
-                        code: Status.INTERNAL,
-                        msg: 'Failed To Commit or close transaction',
-                        details: 'Failed To Commit or close transaction',
+                        code: Status.FAILED_PRECONDITION,
+                        msg: 'Failed To get new Data ',
+                        details: 'Failed To get new Data',
                       });
                     });
                 })
@@ -536,7 +528,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Start Session **/
           const session = await this.connection.startSession();
           session.startTransaction();
-
           /** Converted Id Owner Data Self to ObjectId **/
           const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${authData.id}`);
           /** Checked Data Query if Data In Range In Child **/
