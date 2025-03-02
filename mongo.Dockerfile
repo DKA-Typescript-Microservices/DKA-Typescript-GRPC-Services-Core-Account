@@ -1,4 +1,4 @@
-FROM yovanggaanandhika/mongo:12-slim-mongo-node-8
+FROM yovanggaanandhika/mongo:12-slim-mongo-node-8.0.5
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 RUN apk add --no-cache protobuf-dev
