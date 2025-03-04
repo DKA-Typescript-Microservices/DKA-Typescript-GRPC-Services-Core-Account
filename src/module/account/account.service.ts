@@ -18,6 +18,8 @@ import {
   IAccount,
 } from '../../model/proto/account/account.grpc';
 import { ModelConfig } from '../../config/const/model.config';
+import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
+import { IAccountPlace } from '../../model/database/account/place/account.place.model';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -28,6 +30,8 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   private readonly account: Model<IAccount>;
   @InjectModel(AccountInfoModel.modelName)
   private readonly info: Model<IAccountInfo>;
+  @InjectModel(AccountPlaceModel.modelName)
+  private readonly place: Model<IAccountPlace>;
   @InjectModel(AccountCredentialModel.modelName)
   private readonly credential: Model<IAccountCredential>;
 
@@ -52,8 +56,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Init Model **/
           const info = new this.info(payload.data.info);
           const credential = new this.credential(payload.data.credential);
+          const place = new this.place(payload.data.place);
           /** Save Child Collection Account **/
-          return Promise.all([info.save({ session }), credential.save({ session })])
+          return Promise.all([info.save({ session }), credential.save({ session }), place.save({ session })])
             .then(async ([info, credential]) => {
               const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id });
               return account
@@ -62,6 +67,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   return Promise.all([
                     this.info.updateOne({ _id: info.id }, { parent: finalResult._id }, { session }),
                     this.credential.updateOne({ _id: credential.id }, { parent: finalResult._id }, { session }),
+                    this.place.updateOne({ _id: place.id }, { parent: finalResult._id }, { session }),
                   ])
                     .then(async () => {
                       const query = this.account.aggregate(
@@ -88,6 +94,25 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                           {
                             $project: {
                               'info.parent': 0,
+                            },
+                          },
+                          {
+                            $lookup: {
+                              from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'info'
+                              localField: 'place',
+                              foreignField: '_id',
+                              as: 'place',
+                            },
+                          },
+                          {
+                            $unwind: {
+                              path: '$place',
+                              preserveNullAndEmptyArrays: true,
+                            },
+                          },
+                          {
+                            $project: {
+                              'place.parent': 0,
                             },
                           },
                           {
@@ -267,6 +292,25 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             },
             {
               $lookup: {
+                from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'place'
+                localField: 'place',
+                foreignField: '_id',
+                as: 'place',
+              },
+            },
+            {
+              $unwind: {
+                path: '$place',
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                'place.parent': 0,
+              },
+            },
+            {
+              $lookup: {
                 from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
                 localField: 'credential',
                 foreignField: '_id',
@@ -311,6 +355,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 });
               }
 
+              console.log(result);
               return resolve({
                 status: true,
                 code: Status.OK,
@@ -424,6 +469,21 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 );
               }
 
+              if (payload.data.set.place !== undefined) {
+                mongooseQuery.set(
+                  'place',
+                  this.place
+                    .updateOne(
+                      {
+                        $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      },
+                      { $set: payload.data.set.info },
+                      { session },
+                    )
+                    .exec(),
+                );
+              }
+
               if (payload.data.set.credential !== undefined) {
                 mongooseQuery.set(
                   'credential',
@@ -457,6 +517,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     .findOne({ _id: payload.data.query.id })
                     .populate('info')
                     .populate('credential')
+                    .populate('place')
                     .lean()
                     .exec()
                     .then(async (resultGet) => {
@@ -581,6 +642,25 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               },
               {
                 $lookup: {
+                  from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'info'
+                  localField: 'place',
+                  foreignField: '_id',
+                  as: 'place',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$place',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  'place.parent': 0,
+                },
+              },
+              {
+                $lookup: {
                   from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
                   localField: 'credential',
                   foreignField: '_id',
@@ -659,6 +739,18 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               mongooseQuery.set(
                 'info',
                 this.info
+                  .deleteOne(
+                    {
+                      $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                    },
+                    { session },
+                  )
+                  .exec(),
+              );
+
+              mongooseQuery.set(
+                'place',
+                this.place
                   .deleteOne(
                     {
                       $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],

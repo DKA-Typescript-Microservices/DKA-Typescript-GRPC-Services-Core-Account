@@ -1,6 +1,9 @@
 import { Document, Schema } from 'mongoose';
 import { ISysTimeInfo } from '../../sys.TimeInfo.model';
 
+/**
+ * Model Data Untuk Account Refresh Token Data Digunakan Pemuatan Session Data
+ */
 export interface IAccountToken extends Document {
   reference: Schema.Types.ObjectId;
   jti: Schema.Types.String;

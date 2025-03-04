@@ -9,7 +9,9 @@ import AccountTokenSchema, { AccountTokenModel } from '../../schema/account/sess
 import { AccountCredentialModule } from './credential/account.credential.module';
 import { AccountCredentialService } from './credential/account.credential.service';
 import { ConfigModule } from '@nestjs/config';
+import { AccountPlaceModule } from './place/account.place.module';
 import * as process from 'node:process';
+import { AccountPlaceModel, AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
 
 @Module({
   imports: [
@@ -32,8 +34,10 @@ import * as process from 'node:process';
       { schema: AccountInfoSchema, name: AccountInfoModel.modelName },
       { schema: AccountSchema, name: AccountModel.modelName },
       { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
+      { schema: AccountPlaceSchema, name: AccountPlaceModel.modelName },
     ]),
     AccountCredentialModule,
+    AccountPlaceModule,
   ],
 
   controllers: [AccountController],

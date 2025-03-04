@@ -28,7 +28,7 @@ services:
       - dka-dev
 
   mongo:
-    image: yovanggaanandhika/mongo:12-slim
+    image: yovanggaanandhika/mongo:12-slim-mongo-8.0.5
     container_name: dka-services-core-account-mongo
     hostname: dka-services-core-account-mongo
     environment:

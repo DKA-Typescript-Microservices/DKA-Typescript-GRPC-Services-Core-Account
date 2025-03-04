@@ -10,6 +10,8 @@ import { IAccountCredential } from '../../model/database/account/credential/acco
 import { Seeder } from 'nestjs-seeder';
 import { IAccountToken } from '../../model/database/account/session/account.token.model';
 import { AccountTokenModel } from '../../schema/account/session/account.token.schema';
+import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
+import { IAccountPlace } from '../../model/database/account/place/account.place.model';
 
 @Injectable()
 export class SeedAccountSeeder implements Seeder {
@@ -24,6 +26,8 @@ export class SeedAccountSeeder implements Seeder {
   private readonly credential: Model<IAccountCredential>;
   @InjectModel(AccountTokenModel.modelName)
   private readonly token: Model<IAccountToken>;
+  @InjectModel(AccountPlaceModel.modelName)
+  private readonly place: Model<IAccountPlace>;
 
   async seed() {
     await Promise.all([
@@ -31,6 +35,10 @@ export class SeedAccountSeeder implements Seeder {
         info: {
           firstName: 'Admin',
           lastName: 'Admin',
+        },
+        place: {
+          address: 'Grogol Utara, Kec. Kby. Lama',
+          postalCode: '12210',
         },
         credential: {
           username: 'admin',
@@ -43,6 +51,10 @@ export class SeedAccountSeeder implements Seeder {
           firstName: 'developer',
           lastName: 'developer',
         },
+        place: {
+          address: 'Grogol Utara, Kec. Kby. Lama',
+          postalCode: '12210',
+        },
         credential: {
           username: 'developer',
           email: 'developer@example.com',
@@ -52,23 +64,25 @@ export class SeedAccountSeeder implements Seeder {
     ]);
   }
 
-  private async ClassModelAccounts(payload: { info: any; credential: any }) {
+  private async ClassModelAccounts(payload: { info: any; credential: any; place?: any }) {
     /** Start Session **/
     const session = await this.connection.startSession();
     session.startTransaction();
     /** Init Model **/
     const info = new this.info(payload.info);
     const credential = new this.credential(payload.credential);
+    const place = new this.place(payload.place);
     /** Save Child Collection Account **/
-    await Promise.all([info.save({ session }), credential.save({ session })])
-      .then(async ([info, credential]) => {
-        const account = new this.account({ credential: credential.id, info: info.id });
+    await Promise.all([info.save({ session }), credential.save({ session }), place.save({ session })])
+      .then(async ([info, credential, place]) => {
+        const account = new this.account({ credential: credential.id, info: info.id, place: place.id });
         return account
           .save({ session })
           .then(async (finalResult: any) => {
             return Promise.all([
               this.info.updateOne({ _id: info.id }, { parent: finalResult._id }, { session }),
               this.credential.updateOne({ _id: credential.id }, { parent: finalResult._id }, { session }),
+              this.place.updateOne({ _id: place.id }, { parent: finalResult._id }, { session }),
             ])
               .then(async () => {
                 await session.commitTransaction();
@@ -102,6 +116,7 @@ export class SeedAccountSeeder implements Seeder {
   async drop() {
     await this.account.deleteMany({}).catch((error) => this.logger.error('account', error));
     await this.credential.deleteMany({}).catch((error) => this.logger.error('credential', error));
+    await this.place.deleteMany({}).catch((error) => this.logger.error('place', error));
     await this.info.deleteMany({}).catch((error) => this.logger.error('info', error));
     await this.token.deleteMany({}).catch((error) => this.logger.error('info', error));
   }

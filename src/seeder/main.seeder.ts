@@ -7,6 +7,7 @@ import AccountInfoSchema, { AccountInfoModel } from '../schema/account/info/acco
 import AccountSchema, { AccountModel } from '../schema/account/account.schema';
 import AccountTokenSchema, { AccountTokenModel } from '../schema/account/session/account.token.schema';
 import { SeedAccountSeeder } from './account/seed.account.seeder';
+import { AccountPlaceModel, AccountPlaceSchema } from '../schema/account/place/account.place.schema';
 
 seeder({
   imports: [
@@ -27,6 +28,7 @@ seeder({
       { schema: AccountInfoSchema, name: AccountInfoModel.modelName },
       { schema: AccountSchema, name: AccountModel.modelName },
       { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
+      { schema: AccountPlaceSchema, name: AccountPlaceModel.modelName },
     ]),
   ],
 }).run([SeedAccountSeeder]);

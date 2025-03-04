@@ -31,6 +31,21 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
         message: 'info account ID is not exists',
       },
     },
+    place: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: ModelConfig.accountPlace,
+      validate: {
+        validator: async function (value) {
+          const session = this.$session(); // Ambil session aktif
+          const query = this.model(ModelConfig.accountPlace).exists({ _id: value });
+          if (session) {
+            query.session(session); // Teruskan session ke query
+          }
+          return !!(await query);
+        },
+        message: 'place account ID is not exists',
+      },
+    },
     credential: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.accountCredential,
