@@ -84,6 +84,7 @@ export class AccountCredentialService implements OnModuleInit {
                 .findOne({ _id: new mongoose.Types.ObjectId(`${resultAuth.parent}`) })
                 .populate('info', '-_id -parent')
                 .populate('credential', '-_id -parent')
+                .populate('place', '-_id -parent')
                 .sort({ _id: -1 })
                 .limit(1)
                 .allowDiskUse(true)
@@ -227,6 +228,7 @@ export class AccountCredentialService implements OnModuleInit {
         issuer: `${process.env.ACCESS_TOKEN_ISSUER || 'service-core-account'}`,
       })
         .then(({ payload }) => {
+          this.logger.warn(payload);
           return resolve(payload as IAccount);
         })
         .catch((error) => {
@@ -443,6 +445,7 @@ export class AccountCredentialService implements OnModuleInit {
                 .findOne({ _id: new mongoose.Types.ObjectId(`${decodeData.payload.id}`) })
                 .populate('info', '-_id -parent')
                 .populate('credential', '-_id -parent')
+                .populate('place', '-_id -parent')
                 .sort({ _id: -1 })
                 .limit(1)
                 .allowDiskUse(true)
