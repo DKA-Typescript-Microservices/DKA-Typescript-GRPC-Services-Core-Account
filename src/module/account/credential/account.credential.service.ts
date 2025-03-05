@@ -228,7 +228,6 @@ export class AccountCredentialService implements OnModuleInit {
         issuer: `${process.env.ACCESS_TOKEN_ISSUER || 'service-core-account'}`,
       })
         .then(({ payload }) => {
-          this.logger.warn(payload);
           return resolve(payload as IAccount);
         })
         .catch((error) => {

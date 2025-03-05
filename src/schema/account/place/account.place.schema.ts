@@ -19,7 +19,6 @@ export const AccountPlaceSchema = new mongoose.Schema<IAccountPlace>(
   },
   {
     collection: ModelConfig.accountPlace,
-    versionKey: false,
     strict: true,
     toJSON: {
       getters: true,

@@ -54,8 +54,11 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           const session = await this.connection.startSession();
           session.startTransaction();
           /** Init Model **/
+          /** Convert Request To Info Payloads  **/
           const info = new this.info(payload.data.info);
+          /** Credential Payload Data Untuk Data Login **/
           const credential = new this.credential(payload.data.credential);
+          /** Place Data Payloads Data**/
           const place = new this.place(payload.data.place);
           /** Save Child Collection Account **/
           return Promise.all([info.save({ session }), credential.save({ session }), place.save({ session })])
@@ -354,8 +357,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   error: `Data Not Found`,
                 });
               }
-
-              console.log(result);
               return resolve({
                 status: true,
                 code: Status.OK,

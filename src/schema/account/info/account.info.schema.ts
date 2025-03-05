@@ -41,7 +41,6 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   },
   {
     collection: ModelConfig.accountInfo,
-    versionKey: false,
     strict: true,
     toJSON: {
       getters: true,

@@ -52,7 +52,6 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
   },
   {
     collection: ModelConfig.accountCredential,
-    versionKey: false,
     strict: true,
     toJSON: {
       getters: true,

@@ -60,7 +60,6 @@ export const AccountTokenSchema = new mongoose.Schema<IAccountToken>(
   },
   {
     collection: ModelConfig.accountToken,
-    versionKey: false,
     strict: true,
     toJSON: {
       getters: true,
