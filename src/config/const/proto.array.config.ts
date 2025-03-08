@@ -1,12 +1,12 @@
 import * as path from 'node:path';
 
-const pathModel = path.join(path.dirname(require.main.filename), './model/proto/account');
+const pathModel = path.join(__dirname, './../../model/proto');
 export const ProtoArrayConfig = {
-  package: ['account.info', 'account.place', 'account.credential', 'account'],
+  package: ['account'],
   protoPath: [
-    path.join(pathModel, './place/account.place.grpc.proto'),
-    path.join(pathModel, './info/account.info.grpc.proto'),
-    path.join(pathModel, './credential/account.credential.grpc.proto'),
-    path.join(pathModel, './account.grpc.proto'),
+    path.join(pathModel, './account/account.grpc.proto'),
+    path.join(pathModel, './account/place/account.place.grpc.proto'),
+    path.join(pathModel, './account/info/account.info.grpc.proto'),
+    path.join(pathModel, './account/credential/account.credential.grpc.proto'),
   ],
 };
