@@ -2,15 +2,16 @@ import { Module } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountSchema, { AccountModel } from '../../schema/account/account.schema';
-import AccountInfoSchema, { AccountInfoModel } from '../../schema/account/info/account.info.schema';
-import AccountCredentialSchema, { AccountCredentialModel } from '../../schema/account/credential/account.credential.schema';
-import AccountTokenSchema, { AccountTokenModel } from '../../schema/account/session/account.token.schema';
+import AccountSchema from '../../schema/account/account.schema';
+import AccountInfoSchema from '../../schema/account/info/account.info.schema';
+import AccountCredentialSchema from '../../schema/account/credential/account.credential.schema';
+import AccountTokenSchema from '../../schema/account/session/account.token.schema';
 import { AccountCredentialModule } from './credential/account.credential.module';
 import { AccountCredentialService } from './credential/account.credential.service';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'node:process';
-import { AccountPlaceModel, AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
+import { AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
+import { ModelConfig } from '../../config/const/model.config';
 
 @Module({
   imports: [
@@ -29,11 +30,11 @@ import { AccountPlaceModel, AccountPlaceSchema } from '../../schema/account/plac
       directConnection: process.env.DKA_MONGO_CONNECTION_DIRECT === 'true',
     }),
     MongooseModule.forFeature([
-      { schema: AccountCredentialSchema, name: AccountCredentialModel.modelName },
-      { schema: AccountInfoSchema, name: AccountInfoModel.modelName },
-      { schema: AccountSchema, name: AccountModel.modelName },
-      { schema: AccountTokenSchema, name: AccountTokenModel.modelName },
-      { schema: AccountPlaceSchema, name: AccountPlaceModel.modelName },
+      { schema: AccountCredentialSchema, name: ModelConfig.accountCredential },
+      { schema: AccountInfoSchema, name: ModelConfig.accountInfo },
+      { schema: AccountSchema, name: ModelConfig.account },
+      { schema: AccountTokenSchema, name: ModelConfig.accountToken },
+      { schema: AccountPlaceSchema, name: ModelConfig.accountPlace },
     ]),
     AccountCredentialModule,
   ],

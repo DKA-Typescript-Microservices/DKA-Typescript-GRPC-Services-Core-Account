@@ -246,105 +246,106 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Converted Id Owner Data Self to ObjectId **/
           const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${session.id}`);
           /** Starting Aggregation Data **/
-          const query = this.account.aggregate([
-            {
-              $match: {
-                $or: [{ _id: IdOfOwnerAccount }],
+          const query = this.account.aggregate(
+            [
+              {
+                $match: {
+                  $or: [{ _id: IdOfOwnerAccount }],
+                },
               },
-            },
-            {
-              $graphLookup: {
-                from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
-                startWith: '$_id',
-                connectFromField: '_id',
-                connectToField: 'reference',
-                as: 'children',
-                restrictSearchWithMatch: { reference: { $exists: true } },
+              {
+                $graphLookup: {
+                  from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
+                  startWith: '$_id',
+                  connectFromField: '_id',
+                  connectToField: 'reference',
+                  as: 'children',
+                  restrictSearchWithMatch: { reference: { $exists: true } },
+                },
               },
-            },
-            {
-              $addFields: {
-                merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
+              {
+                $addFields: {
+                  merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
+                },
               },
-            },
-            { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
-            { $replaceRoot: { newRoot: '$merged' } }, // Jadikan `merged` sebagai root
-            {
-              $project: {
-                children: 0, // Hapus field children
+              { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
+              { $replaceRoot: { newRoot: '$merged' } }, // Jadikan `merged` sebagai root
+              {
+                $project: {
+                  children: 0, // Hapus field children
+                },
               },
-            },
-            {
-              $lookup: {
-                from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
-                localField: 'info',
-                foreignField: '_id',
-                as: 'info',
+              {
+                $lookup: {
+                  from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
+                  localField: 'info',
+                  foreignField: '_id',
+                  as: 'info',
+                },
               },
-            },
-            {
-              $unwind: {
-                path: '$info',
-                preserveNullAndEmptyArrays: true,
+              {
+                $unwind: {
+                  path: '$info',
+                  preserveNullAndEmptyArrays: true,
+                },
               },
-            },
-            {
-              $project: {
-                'info.parent': 0,
+              {
+                $project: {
+                  'info.parent': 0,
+                },
               },
-            },
-            {
-              $lookup: {
-                from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'place'
-                localField: 'place',
-                foreignField: '_id',
-                as: 'place',
+              {
+                $lookup: {
+                  from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'place'
+                  localField: 'place',
+                  foreignField: '_id',
+                  as: 'place',
+                },
               },
-            },
-            {
-              $unwind: {
-                path: '$place',
-                preserveNullAndEmptyArrays: true,
+              {
+                $unwind: {
+                  path: '$place',
+                  preserveNullAndEmptyArrays: true,
+                },
               },
-            },
-            {
-              $project: {
-                'place.parent': 0,
+              {
+                $project: {
+                  'place.parent': 0,
+                },
               },
-            },
-            {
-              $lookup: {
-                from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
-                localField: 'credential',
-                foreignField: '_id',
-                as: 'credential',
+              {
+                $lookup: {
+                  from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
+                  localField: 'credential',
+                  foreignField: '_id',
+                  as: 'credential',
+                },
               },
-            },
-            {
-              $unwind: {
-                path: '$credential',
-                preserveNullAndEmptyArrays: true,
+              {
+                $unwind: {
+                  path: '$credential',
+                  preserveNullAndEmptyArrays: true,
+                },
               },
-            },
-            {
-              $project: {
-                'credential.password': 0,
-                'credential.parent': 0,
+              {
+                $project: {
+                  'credential.password': 0,
+                  'credential.parent': 0,
+                },
               },
-            },
-            {
-              $addFields: {
-                id: '$_id', // Buat field baru `id` dari `_id`
+              {
+                $addFields: {
+                  id: '$_id', // Buat field baru `id` dari `_id`
+                },
               },
-            },
-            {
-              $project: {
-                _id: 0, // Hilangkan `_id`
+              {
+                $project: {
+                  _id: 0, // Hilangkan `_id`
+                },
               },
-            },
-          ]);
-          if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.allowDiskUse !== undefined)
-            query.allowDiskUse(payload.data.options.allowDiskUse);
+            ],
+            { allowDiskUse: true },
+          );
           if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
           return query
             .exec()

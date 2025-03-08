@@ -7,6 +7,7 @@ import { ProtoArrayConfig } from './config/const/proto.array.config';
 import { ServerCredentials } from '@grpc/grpc-js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { join } from 'node:path';
 import { ReflectionService } from '@grpc/reflection';
 import * as os from 'node:os';
 
@@ -57,6 +58,9 @@ import * as os from 'node:os';
       url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
       package: ProtoArrayConfig.package,
       protoPath: ProtoArrayConfig.protoPath,
+      loader: {
+        includeDirs: [join(__dirname, 'model/proto')],
+      },
       credentials: serverCredential,
       onLoadPackageDefinition: (pkg, server) => {
         if (process.env.DKA_SERVER_REFLECTION === undefined || process.env.DKA_SERVER_REFLECTION === 'true') {

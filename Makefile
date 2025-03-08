@@ -21,8 +21,8 @@ proto:
 	@rm -rf src/model/proto/*.ts
 	@protoc --plugin="protoc-gen-ts=$(which protoc-gen-ts)" \
 	--ts_proto_opt=rpc=true,binary=true,metadata=true,addGrpcMetadata=true \
-	--proto_path=src/model/proto/account \
-	--ts_proto_out=src/model/proto/account \
+	--proto_path=src/model/proto \
+	--ts_proto_out=src/model/proto \
 	 $(shell find src/model/proto -name "*.proto")
 
 # clean Dist Folder
