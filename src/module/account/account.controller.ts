@@ -5,6 +5,7 @@ import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware'
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
   AccountAuthRequest,
+  AccountByIDRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -45,6 +46,26 @@ export class AccountController {
   async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
     return await this.accountService
       .ReadAll({
+        data,
+        metadata,
+        call,
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((reason) => {
+        throw new RpcException({
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
+        });
+      });
+  }
+
+  @GrpcMethod('Resources', 'ReadById')
+  async ReadById(data: AccountByIDRequest, metadata: Metadata, call: ServerUnaryCall<AccountByIDRequest, IAccount>): Promise<IAccount> {
+    return await this.accountService
+      .ReadById({
         data,
         metadata,
         call,

@@ -10,6 +10,7 @@ import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
   AccountAuthRequest,
+  AccountByIDRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -391,6 +392,76 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             code: Status.UNKNOWN,
             msg: 'An internal server error occurred. Please try again later.',
             details: 'A system error was encountered. The development team is investigating.',
+          });
+      }
+    });
+  }
+
+  async ReadById(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, IAccount> }): Promise<IAccount> {
+    return new Promise(async (resolve, reject) => {
+      switch (this.connection.readyState) {
+        case ConnectionStates.connected:
+          if (payload.data.id === undefined)
+            return reject({
+              status: false,
+              code: Status.INVALID_ARGUMENT,
+              msg: `Payload ID Request Is Required`,
+              error: `Payload ID Request Is Required`,
+            });
+
+          if (!mongoose.Types.ObjectId.isValid(`${payload.data.id}`))
+            return reject({
+              status: false,
+              code: Status.INVALID_ARGUMENT,
+              msg: `Payload ID Request Is Not Valid`,
+              error: `Payload ID Request Is Not Valid`,
+            });
+
+          return this.account
+            .findOne({ _id: new mongoose.Types.ObjectId(`${payload.data.id}`) })
+            .populate('info', '-_id -parent')
+            .populate('credential', '-_id -parent')
+            .populate('place', '-_id -parent')
+            .sort({ _id: -1 })
+            .limit(1)
+            .allowDiskUse(true)
+            .lean()
+            .exec()
+            .then((resultGet) => {
+              if (resultGet === null || resultGet === undefined)
+                return reject({
+                  status: false,
+                  code: Status.NOT_FOUND,
+                  msg: `Data Not Found`,
+                  error: `Data Not Found`,
+                });
+              /** Successfully Response **/
+              // Remove _id
+              resultGet.id = resultGet._id.toString(); // Set the `id` field
+              delete resultGet._id; // Remove the original _id field
+              return resolve(resultGet);
+            })
+            .catch((error) => {
+              this.logger.error(error);
+              return reject({
+                status: false,
+                code: Status.ABORTED,
+                msg: `Failed Get Account Data`,
+                error: error,
+              });
+            });
+        case ConnectionStates.disconnected:
+          return reject({
+            status: false,
+            code: Status.UNAVAILABLE,
+            msg: 'The database service is currently down. Contact the developer if the issue persists.',
+          });
+        default:
+          return reject({
+            status: false,
+            code: Status.UNKNOWN,
+            msg: 'An unexpected error occurred. Please try again later.',
+            details: `The development team is investigating the issue.`,
           });
       }
     });

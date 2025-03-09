@@ -31,6 +31,7 @@ export class AccountCredentialService implements OnModuleInit {
   private readonly credential: Model<IAccountCredential>;
   @InjectModel(AccountTokenModel.modelName)
   private readonly token: Model<IAccountToken>;
+
   private KeyPath = path.join(`/var/tmp`, `${os.hostname()}`);
 
   async onModuleInit() {
