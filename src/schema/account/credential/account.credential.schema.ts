@@ -7,6 +7,7 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     reference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.account,
+      index: true,
       validate: {
         validator: async function (value) {
           return !!(await this.model(ModelConfig.account).exists({
@@ -19,6 +20,7 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.account,
+      index: true,
       validate: {
         validator: async function (value) {
           const session = this.$session(); // Ambil session aktif
@@ -34,6 +36,8 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     email: {
       type: mongoose.Schema.Types.String,
       required: true,
+      index: true,
+      unique: true,
       validate: {
         validator: async function (value) {
           return /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value);
@@ -43,10 +47,13 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     },
     username: {
       type: mongoose.Schema.Types.String,
+      unique: true,
+      index: true,
       required: true,
     },
     password: {
       type: mongoose.Schema.Types.String,
+      index: true,
       required: true,
     },
   },
@@ -62,26 +69,6 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     },
   },
 );
-
-AccountCredentialSchema.pre('createCollection', async (next) => {
-  AccountCredentialSchema.index({ username: 1 }, { unique: true });
-  AccountCredentialSchema.index({ email: 1 }, { unique: true });
-
-  AccountCredentialSchema.index({ username: -1 }, { unique: true });
-  AccountCredentialSchema.index({ email: -1 }, { unique: true });
-
-  AccountCredentialSchema.index({ username: 'text' }, { unique: true });
-  AccountCredentialSchema.index({ email: 'text' }, { unique: true });
-
-  AccountCredentialSchema.index({ email: 1, username: 1 }, { unique: true });
-  AccountCredentialSchema.index({ email: -1, username: -1 }, { unique: true });
-  AccountCredentialSchema.index({ email: 'text', username: 'text' }, { unique: true });
-
-  AccountCredentialSchema.index({ password: -1 });
-  AccountCredentialSchema.index({ password: 1 });
-  AccountCredentialSchema.index({ password: 'text' });
-  next();
-});
 
 export const AccountCredentialModel = mongoose.model(ModelConfig.accountCredential, AccountCredentialSchema);
 

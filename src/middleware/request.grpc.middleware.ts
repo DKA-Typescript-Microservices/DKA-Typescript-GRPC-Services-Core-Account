@@ -1,20 +1,16 @@
 import { CallHandler, ExecutionContext, Inject, Injectable, Logger, NestInterceptor, OnModuleInit } from '@nestjs/common';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
 import { Status } from '@grpc/grpc-js/build/src/constants';
-import { ClientGrpc, RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
 import { Metadata } from '@grpc/grpc-js';
-import { Credential } from '../model/proto/session/session.grpc';
 import * as process from 'process';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
   private readonly logger: Logger = new Logger(this.constructor.name);
-  private readonly sessionService: Credential;
 
-  constructor(@Inject('SESSION_SERVICE') private readonly sessionClient: ClientGrpc) {
-    this.sessionService = this.sessionClient.getService<Credential>('Credential');
-  }
+  constructor(@Inject('SESSION_SERVICE') private readonly sessionClient: ClientProxy) {}
 
   async onModuleInit() {
     //###############################################################################################################################
@@ -51,14 +47,7 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
 
     const accessToken = `${Authorization}`.split(' ')[1];
 
-    return firstValueFrom(
-      this.sessionService.verify(
-        {
-          token: accessToken,
-        },
-        ctx,
-      ),
-    )
+    return firstValueFrom(this.sessionClient.send('session.verify', { token: accessToken }))
       .then((result: any) => {
         ctx.add('session', result);
         ctx.add('request-time', now.clone().toISOString(true));

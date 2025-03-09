@@ -397,11 +397,11 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async ReadById(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, IAccount> }): Promise<IAccount> {
+  async ReadById(request: AccountByIDRequest): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
-          if (payload.data.id === undefined)
+          if (request.id === undefined)
             return reject({
               status: false,
               code: Status.INVALID_ARGUMENT,
@@ -409,7 +409,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               error: `Payload ID Request Is Required`,
             });
 
-          if (!mongoose.Types.ObjectId.isValid(`${payload.data.id}`))
+          if (!mongoose.Types.ObjectId.isValid(`${request.id}`))
             return reject({
               status: false,
               code: Status.INVALID_ARGUMENT,
@@ -418,7 +418,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             });
 
           return this.account
-            .findOne({ _id: new mongoose.Types.ObjectId(`${payload.data.id}`) })
+            .findOne({ _id: new mongoose.Types.ObjectId(`${request.id}`) })
             .populate('info', '-_id -parent')
             .populate('credential', '-_id -parent')
             .populate('place', '-_id -parent')
@@ -467,7 +467,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async Auth(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<AccountAuthRequest, IAccount> }): Promise<IAccount> {
+  async Auth(request: AccountAuthRequest): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -475,9 +475,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .findOne({
               $and: [
                 {
-                  $or: [{ username: `${payload.data.username}` }, { email: `${payload.data.username}` }],
+                  $or: [{ username: `${request.username}` }, { email: `${request.username}` }],
                 },
-                { password: `${payload.data.password}` },
+                { password: `${request.password}` },
               ],
             })
             .sort({ _id: -1 })

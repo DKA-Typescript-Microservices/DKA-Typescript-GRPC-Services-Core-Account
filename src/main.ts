@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ModuleModule } from './module/module.module';
 import { Logger } from '@nestjs/common';
-import { GrpcOptions, Transport } from '@nestjs/microservices';
+import { GrpcOptions, TcpOptions, Transport } from '@nestjs/microservices';
 import * as process from 'node:process';
 import { ProtoArrayConfig } from './config/const/proto.array.config';
 import { ServerCredentials } from '@grpc/grpc-js';
@@ -53,34 +53,63 @@ import * as os from 'node:os';
     );
   }
 
-  const urlService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
+  const urlGrpcService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
+  const urlTCPService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 6370)}`;
 
-  return NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
-    transport: Transport.GRPC,
-    options: {
-      url: urlService,
-      package: ProtoArrayConfig.package,
-      protoPath: ProtoArrayConfig.protoPath,
-      loader: {
-        includeDirs: [join(__dirname, 'model/proto')],
+  return Promise.allSettled([
+    NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
+      transport: Transport.GRPC,
+      options: {
+        url: urlGrpcService,
+        package: ProtoArrayConfig.package,
+        protoPath: ProtoArrayConfig.protoPath,
+        loader: {
+          includeDirs: [join(__dirname, 'model/proto')],
+        },
+        credentials: serverCredential,
+        onLoadPackageDefinition: (pkg, server) => {
+          if (process.env.DKA_SERVER_REFLECTION === undefined || process.env.DKA_SERVER_REFLECTION === 'true') {
+            new ReflectionService(pkg).addToServer(server);
+          }
+        },
       },
-      credentials: serverCredential,
-      onLoadPackageDefinition: (pkg, server) => {
-        if (process.env.DKA_SERVER_REFLECTION === undefined || process.env.DKA_SERVER_REFLECTION === 'true') {
-          new ReflectionService(pkg).addToServer(server);
-        }
+    }),
+    NestFactory.createMicroservice<TcpOptions>(ModuleModule, {
+      transport: Transport.TCP,
+      options: {
+        host: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`,
+        port: Number(`${process.env.DKA_SERVER_BRIDGE_PORT || 6370}`),
       },
-    },
-  })
-    .then(async (app) => {
-      return app
-        .listen()
-        .then(() => {
-          logger.log(`Running server successfully In ${urlService} ...`);
-        })
-        .catch((error) => {
-          logger.error(error);
-        });
+    }),
+  ])
+    .then(async ([grpc, tcp]) => {
+      if (grpc.status === 'fulfilled') {
+        grpc?.value
+          .listen()
+          .then((_) => {
+            logger.log(`Running server GRPC successfully In ${urlGrpcService} ...`);
+          })
+          .catch((error) => {
+            logger.error(error);
+          });
+      } else {
+        logger.log(`Running server GRPC Failed In ${urlGrpcService} ...`);
+        logger.error(grpc.reason);
+      }
+
+      if (tcp.status === 'fulfilled') {
+        tcp?.value
+          .listen()
+          .then((_) => {
+            logger.log(`Running server TCP successfully In ${urlTCPService} ...`);
+          })
+          .catch((error) => {
+            logger.error(error);
+          });
+      } else {
+        logger.log(`Running server TCP Failed In ${urlTCPService} ...`);
+        logger.error(tcp.reason);
+      }
     })
     .catch((error) => {
       logger.error(error);

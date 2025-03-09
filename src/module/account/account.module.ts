@@ -39,14 +39,10 @@ const pathModel = path.join(__dirname, './../../model/proto');
     ClientsModule.register([
       {
         name: 'SESSION_SERVICE',
-        transport: Transport.GRPC,
+        transport: Transport.TCP,
         options: {
-          url: `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 80}`,
-          package: 'session',
-          protoPath: [path.join(pathModel, './session/session.grpc.proto')],
-          loader: {
-            includeDirs: [pathModel],
-          },
+          host: `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}`,
+          port: Number(process.env.DKA_SERVICE_SESSION_PORT || 6370),
         },
       },
     ]),

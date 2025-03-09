@@ -7,6 +7,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     reference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.account,
+      index: true,
       validate: {
         validator: async function (value) {
           return !!(await this.model(ModelConfig.account).exists({
@@ -19,6 +20,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     info: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.accountInfo,
+      index: true,
       validate: {
         validator: async function (value) {
           const session = this.$session(); // Ambil session aktif
@@ -34,6 +36,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     place: {
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.accountPlace,
+      index: true,
       validate: {
         validator: async function (value) {
           const session = this.$session(); // Ambil session aktif
@@ -50,6 +53,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       type: mongoose.Schema.Types.ObjectId,
       ref: ModelConfig.accountCredential,
       required: true,
+      index: true,
       validate: {
         validator: async function (value) {
           const session = this.$session(); // Ambil session aktif
@@ -75,19 +79,6 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
     },
   },
 );
-
-AccountSchema.pre('createCollection', async (next) => {
-  AccountSchema.index({ info: -1, credential: -1 });
-  AccountSchema.index({ info: 1, credential: 1 });
-  AccountSchema.index({ info: 'text', credential: 'text' });
-  AccountSchema.index({ info: -1 });
-  AccountSchema.index({ credential: -1 });
-  AccountSchema.index({ info: 1 });
-  AccountSchema.index({ credential: 1 });
-  AccountSchema.index({ info: 'text' });
-  AccountSchema.index({ credential: 'text' });
-  next();
-});
 
 export const AccountModel = mongoose.model(ModelConfig.account, AccountSchema);
 

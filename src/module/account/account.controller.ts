@@ -1,6 +1,6 @@
 import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { AccountService } from './account.service';
-import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { GrpcMethod, MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
@@ -62,43 +62,27 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Resources', 'ReadById')
-  async ReadById(data: AccountByIDRequest, metadata: Metadata, call: ServerUnaryCall<AccountByIDRequest, IAccount>): Promise<IAccount> {
+  @MessagePattern({ cmd: 'account.read.by.id' })
+  async ReadById(@Payload() request: AccountByIDRequest): Promise<IAccount> {
     return await this.accountService
-      .ReadById({
-        data,
-        metadata,
-        call,
-      })
+      .ReadById(request)
       .then((result) => {
         return result;
       })
       .catch((reason) => {
-        throw new RpcException({
-          code: reason.code,
-          message: reason.msg,
-          details: reason.details,
-        });
+        return reason;
       });
   }
 
-  @GrpcMethod('Resources', 'Auth')
-  async Auth(data: AccountAuthRequest, metadata: Metadata, call: ServerUnaryCall<AccountAuthRequest, IAccount>): Promise<IAccount> {
+  @MessagePattern({ cmd: 'account.read.by.id' })
+  async Auth(@Payload() request: AccountAuthRequest): Promise<IAccount> {
     return await this.accountService
-      .Auth({
-        data,
-        metadata,
-        call,
-      })
+      .Auth(request)
       .then((result) => {
         return result;
       })
       .catch((reason) => {
-        throw new RpcException({
-          code: reason.code,
-          message: reason.msg,
-          details: reason.details,
-        });
+        return reason;
       });
   }
 
