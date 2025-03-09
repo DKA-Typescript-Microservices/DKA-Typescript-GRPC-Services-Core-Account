@@ -4,6 +4,7 @@ import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
+  AccountAuthRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -44,6 +45,26 @@ export class AccountController {
   async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
     return await this.accountService
       .ReadAll({
+        data,
+        metadata,
+        call,
+      })
+      .then((result) => {
+        return result;
+      })
+      .catch((reason) => {
+        throw new RpcException({
+          code: reason.code,
+          message: reason.msg,
+          details: reason.details,
+        });
+      });
+  }
+
+  @GrpcMethod('Resources', 'Auth')
+  async Auth(data: AccountAuthRequest, metadata: Metadata, call: ServerUnaryCall<AccountAuthRequest, IAccount>): Promise<IAccount> {
+    return await this.accountService
+      .Auth({
         data,
         metadata,
         call,
