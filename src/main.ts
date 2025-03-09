@@ -52,10 +52,13 @@ import * as os from 'node:os';
       false,
     );
   }
+
+  const urlService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
+
   return NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
     transport: Transport.GRPC,
     options: {
-      url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
+      url: urlService,
       package: ProtoArrayConfig.package,
       protoPath: ProtoArrayConfig.protoPath,
       loader: {
@@ -73,7 +76,7 @@ import * as os from 'node:os';
       return app
         .listen()
         .then(() => {
-          logger.log(`Running server successfully`);
+          logger.log(`Running server successfully In ${urlService} ...`);
         })
         .catch((error) => {
           logger.error(error);
