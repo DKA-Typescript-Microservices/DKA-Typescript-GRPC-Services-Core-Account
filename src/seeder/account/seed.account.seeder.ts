@@ -8,8 +8,6 @@ import { IAccountInfo } from '../../model/database/account/info/account.info.mod
 import { AccountCredentialModel } from '../../schema/account/credential/account.credential.schema';
 import { IAccountCredential } from '../../model/database/account/credential/account.credential.model';
 import { Seeder } from 'nestjs-seeder';
-import { IAccountToken } from '../../model/database/account/session/account.token.model';
-import { AccountTokenModel } from '../../schema/account/session/account.token.schema';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
 
@@ -24,8 +22,6 @@ export class SeedAccountSeeder implements Seeder {
   private readonly info: Model<IAccountInfo>;
   @InjectModel(AccountCredentialModel.modelName)
   private readonly credential: Model<IAccountCredential>;
-  @InjectModel(AccountTokenModel.modelName)
-  private readonly token: Model<IAccountToken>;
   @InjectModel(AccountPlaceModel.modelName)
   private readonly place: Model<IAccountPlace>;
 
@@ -118,6 +114,5 @@ export class SeedAccountSeeder implements Seeder {
     await this.credential.deleteMany({}).catch((error) => this.logger.error('credential', error));
     await this.place.deleteMany({}).catch((error) => this.logger.error('place', error));
     await this.info.deleteMany({}).catch((error) => this.logger.error('info', error));
-    await this.token.deleteMany({}).catch((error) => this.logger.error('info', error));
   }
 }
