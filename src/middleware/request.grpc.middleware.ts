@@ -14,7 +14,7 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
 
   async onModuleInit() {
     //###############################################################################################################################
-    const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 80}`;
+    const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 6370}`;
     this.logger.log(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
     //###############################################################################################################################
   }
