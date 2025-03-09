@@ -55,7 +55,7 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
         return next.handle();
       })
       .catch((error) => {
-        this.logger.error(JSON.stringify(error));
+        this.logger.error(error);
         return throwError(() => new RpcException(error));
       });
   }

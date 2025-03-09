@@ -62,7 +62,7 @@ export class AccountController {
       });
   }
 
-  @MessagePattern({ cmd: 'account.read.by.id' })
+  @MessagePattern('account.read.by.id')
   async ReadById(@Payload() request: AccountByIDRequest): Promise<IAccount> {
     return await this.accountService
       .ReadById(request)
@@ -74,7 +74,7 @@ export class AccountController {
       });
   }
 
-  @MessagePattern({ cmd: 'account.auth' })
+  @MessagePattern('account.auth')
   async Auth(@Payload() request: AccountAuthRequest): Promise<IAccount> {
     return await this.accountService
       .Auth(request)
