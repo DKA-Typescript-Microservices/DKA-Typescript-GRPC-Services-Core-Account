@@ -10,12 +10,14 @@ import * as path from 'node:path';
 import { join } from 'node:path';
 import { ReflectionService } from '@grpc/reflection';
 import * as os from 'node:os';
+import { TlsOptions } from 'tls';
 
 (async () => {
   const logger: Logger = new Logger('Services Runner');
   //########################################################################
   const isServiceSecure = process.env.DKA_SERVER_SECURE === 'true';
   let serverCredential = ServerCredentials.createInsecure();
+  let tcpOption: TlsOptions | undefined = undefined;
   //########################################################################
   const SSLPath = path.join(`/etc/letsencrypt/live`, `${os.hostname()}`);
   //########################################################################
@@ -51,6 +53,13 @@ import * as os from 'node:os';
       ],
       false,
     );
+
+    tcpOption = {
+      ca: [fs.readFileSync(CAFile)],
+      key: fs.readFileSync(PrivateKeyFile),
+      cert: fs.readFileSync(CertFile),
+      rejectUnauthorized: true,
+    };
   }
 
   const urlGrpcService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
@@ -79,6 +88,7 @@ import * as os from 'node:os';
       options: {
         host: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`,
         port: Number(`${process.env.DKA_SERVER_BRIDGE_PORT || 6370}`),
+        tlsOptions: tcpOption,
       },
     }),
   ])
