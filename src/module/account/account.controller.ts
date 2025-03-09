@@ -74,7 +74,7 @@ export class AccountController {
       });
   }
 
-  @MessagePattern({ cmd: 'account.read.by.id' })
+  @MessagePattern({ cmd: 'account.auth' })
   async Auth(@Payload() request: AccountAuthRequest): Promise<IAccount> {
     return await this.accountService
       .Auth(request)
