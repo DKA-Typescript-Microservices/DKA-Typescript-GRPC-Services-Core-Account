@@ -9,6 +9,10 @@ import { ConfigModule } from '@nestjs/config';
 import * as process from 'node:process';
 import { AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
 import { ModelConfig } from '../../config/const/model.config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import * as path from 'node:path';
+
+const pathModel = path.join(__dirname, './../../model/proto');
 
 @Module({
   imports: [
@@ -32,8 +36,21 @@ import { ModelConfig } from '../../config/const/model.config';
       { schema: AccountSchema, name: ModelConfig.account },
       { schema: AccountPlaceSchema, name: ModelConfig.accountPlace },
     ]),
+    ClientsModule.register([
+      {
+        name: 'SESSION_SERVICE',
+        transport: Transport.GRPC,
+        options: {
+          url: `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 80}`,
+          package: 'session',
+          protoPath: [path.join(pathModel, './session/session.grpc.proto')],
+          loader: {
+            includeDirs: [pathModel],
+          },
+        },
+      },
+    ]),
   ],
-
   controllers: [AccountController],
   providers: [AccountService],
 })
