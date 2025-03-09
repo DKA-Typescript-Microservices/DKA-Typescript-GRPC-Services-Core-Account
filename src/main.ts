@@ -55,7 +55,7 @@ import * as os from 'node:os';
   return NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
     transport: Transport.GRPC,
     options: {
-      url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
+      url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 3118)}`,
       package: ProtoArrayConfig.package,
       protoPath: ProtoArrayConfig.protoPath,
       loader: {

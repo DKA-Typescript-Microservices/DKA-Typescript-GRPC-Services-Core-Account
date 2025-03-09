@@ -3,14 +3,13 @@ import { Observable, throwError } from 'rxjs';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
-import { AccountCredentialService } from '../module/account/credential/account.credential.service';
 import { Metadata } from '@grpc/grpc-js';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor {
   private readonly logger: Logger = new Logger(this.constructor.name);
 
-  constructor(private readonly credentialService: AccountCredentialService) {}
+  constructor() {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> | Promise<Observable<any>> {
     //##########################################################################
     const rpcMethod = context.getHandler().name;
@@ -40,7 +39,8 @@ export class RequestGrpcMiddleware implements NestInterceptor {
 
     const accessToken = `${Authorization}`.split(' ')[1];
 
-    return this.credentialService
+    return next.handle();
+    /*return this.credentialService
       .verifyToken({
         data: {
           token: accessToken,
@@ -58,6 +58,6 @@ export class RequestGrpcMiddleware implements NestInterceptor {
       .catch((error) => {
         this.logger.error(JSON.stringify(error));
         return throwError(() => new RpcException(error));
-      });
+      });*/
   }
 }
