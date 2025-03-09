@@ -43,6 +43,9 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
 
     return firstValueFrom(this.sessionClient.send('session.verify', { token: accessToken }))
       .then((result: any) => {
+        if (result.status !== undefined && !result.status) {
+          return throwError(() => new RpcException(result));
+        }
         ctx.add('session', result);
         ctx.add('request-time', now.clone().toISOString(true));
         ctx.add('grpc-method', rpcMethod);
