@@ -12,7 +12,6 @@ export class RequestGrpcMiddleware implements NestInterceptor {
   private readonly sessionService: Credential;
 
   constructor(@Inject('SESSION_SERVICE') private readonly sessionClient: ClientGrpc) {
-    console.log(sessionClient);
     this.sessionService = this.sessionClient.getService<Credential>('Credential');
   }
 
