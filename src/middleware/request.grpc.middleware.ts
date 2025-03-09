@@ -1,13 +1,14 @@
-import { CallHandler, ExecutionContext, Inject, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Inject, Injectable, Logger, NestInterceptor, OnModuleInit } from '@nestjs/common';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
 import { Metadata } from '@grpc/grpc-js';
 import { Credential } from '../model/proto/session/session.grpc';
+import * as process from 'process';
 
 @Injectable()
-export class RequestGrpcMiddleware implements NestInterceptor {
+export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
   private readonly logger: Logger = new Logger(this.constructor.name);
   private readonly sessionService: Credential;
 
@@ -15,6 +16,12 @@ export class RequestGrpcMiddleware implements NestInterceptor {
     this.sessionService = this.sessionClient.getService<Credential>('Credential');
   }
 
+  async onModuleInit() {
+    //###############################################################################################################################
+    const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 80}`;
+    this.logger.log(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
+    //###############################################################################################################################
+  }
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> | Promise<Observable<any>> {
     //##########################################################################
     const rpcMethod = context.getHandler().name;
@@ -44,29 +51,23 @@ export class RequestGrpcMiddleware implements NestInterceptor {
 
     const accessToken = `${Authorization}`.split(' ')[1];
 
-    try {
-      return firstValueFrom(
-        this.sessionService.verify(
-          {
-            token: accessToken,
-          },
-          ctx,
-        ),
-      )
-        .then((result: any) => {
-          ctx.add('session', result);
-          ctx.add('request-time', now.clone().toISOString(true));
-          ctx.add('grpc-method', rpcMethod);
-
-          return next.handle();
-        })
-        .catch((error) => {
-          this.logger.error(JSON.stringify(error));
-          return throwError(() => new RpcException(error));
-        });
-    } catch (e) {
-      this.logger.error(e);
-      return throwError(() => new RpcException(e));
-    }
+    return firstValueFrom(
+      this.sessionService.verify(
+        {
+          token: accessToken,
+        },
+        ctx,
+      ),
+    )
+      .then((result: any) => {
+        ctx.add('session', result);
+        ctx.add('request-time', now.clone().toISOString(true));
+        ctx.add('grpc-method', rpcMethod);
+        return next.handle();
+      })
+      .catch((error) => {
+        this.logger.error(JSON.stringify(error));
+        return throwError(() => new RpcException(error));
+      });
   }
 }
