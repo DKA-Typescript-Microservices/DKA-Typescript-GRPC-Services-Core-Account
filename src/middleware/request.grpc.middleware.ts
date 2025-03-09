@@ -4,7 +4,6 @@ import { Status } from '@grpc/grpc-js/build/src/constants';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import * as moment from 'moment-timezone';
 import { Metadata } from '@grpc/grpc-js';
-import * as process from 'process';
 
 @Injectable()
 export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
@@ -12,12 +11,7 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
 
   constructor(@Inject('SESSION_SERVICE') private readonly sessionClient: ClientProxy) {}
 
-  async onModuleInit() {
-    //###############################################################################################################################
-    const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 6370}`;
-    this.logger.log(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
-    //###############################################################################################################################
-  }
+  async onModuleInit() {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> | Promise<Observable<any>> {
     //##########################################################################
     const rpcMethod = context.getHandler().name;

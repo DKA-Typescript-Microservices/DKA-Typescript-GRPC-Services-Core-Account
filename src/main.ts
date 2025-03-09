@@ -102,6 +102,10 @@ import * as os from 'node:os';
           .listen()
           .then((_) => {
             logger.log(`Running server TCP successfully In ${urlTCPService} ...`);
+            //###############################################################################################################################
+            const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 6370}`;
+            logger.log(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
+            //###############################################################################################################################
           })
           .catch((error) => {
             logger.error(error);
