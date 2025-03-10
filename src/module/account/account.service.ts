@@ -22,7 +22,7 @@ import {
 import { ModelConfig } from '../../config/const/model.config';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -493,8 +493,8 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   error: `Data Not Found`,
                 });
 
-              return bcrypt
-                .compare(request.password, resultAuth.password)
+              return argon2
+                .verify(resultAuth.password, request.password)
                 .then((resultHash) => {
                   if (!resultHash)
                     return reject({

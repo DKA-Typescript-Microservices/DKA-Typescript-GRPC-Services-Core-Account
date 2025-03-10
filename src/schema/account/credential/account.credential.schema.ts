@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../../../model/database/account/credential/account.credential.model';
 import { ModelConfig } from '../../../config/const/model.config';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
@@ -55,9 +55,6 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     password: {
       type: mongoose.Schema.Types.String,
       required: true,
-      set: function (password: any) {
-        return bcrypt.hashSync(password, 10);
-      },
     },
   },
   {
@@ -72,6 +69,24 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     },
   },
 );
+
+AccountCredentialSchema.pre('save', async function (next) {
+  const account = this as any;
+  return await argon2
+    .hash(account.password, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    })
+    .then((hash) => {
+      account.password = hash;
+      return next();
+    })
+    .catch(async (error) => {
+      next(error);
+    });
+});
 
 export const AccountCredentialModel = mongoose.model(ModelConfig.accountCredential, AccountCredentialSchema);
 
