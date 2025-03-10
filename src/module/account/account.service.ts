@@ -160,68 +160,86 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                         .exec()
                         .then(async (result) => {
                           if (result.length < 1) {
-                            await session.abortTransaction();
-                            await session.endSession();
-                            return reject({
-                              status: false,
-                              code: Status.NOT_FOUND,
-                              msg: `Data Not Found. Rollback...`,
-                              error: `Data Not Found. Rollback ...`,
-                            });
+                            return session
+                              .abortTransaction()
+                              .then(() => session.endSession())
+                              .then(() => {
+                                return reject({
+                                  status: false,
+                                  code: Status.NOT_FOUND,
+                                  msg: `Data Not Found. Rollback...`,
+                                  error: `Data Not Found. Rollback ...`,
+                                });
+                              });
                           }
 
-                          await session.commitTransaction();
-                          await session.endSession();
-                          return resolve({
-                            status: true,
-                            code: Status.OK,
-                            msg: `Successfully Create Data`,
-                            data: result[0],
-                          });
+                          return session
+                            .commitTransaction()
+                            .then(() => session.endSession())
+                            .then(() => {
+                              return resolve({
+                                status: true,
+                                code: Status.OK,
+                                msg: `Successfully Create Data`,
+                                data: result[0],
+                              });
+                            });
                         })
                         .catch(async (error) => {
-                          this.logger.error(error);
-                          await session.abortTransaction();
-                          await session.endSession();
-                          return reject({
-                            status: false,
-                            code: Status.ABORTED,
-                            msg: `Failed Get Account Data`,
-                            details: error,
-                          });
+                          return session
+                            .abortTransaction()
+                            .then(() => session.endSession())
+                            .then(() => {
+                              this.logger.error(error);
+                              return reject({
+                                status: false,
+                                code: Status.ABORTED,
+                                msg: `Failed Get Account Data`,
+                                details: error,
+                              });
+                            });
                         });
                     })
                     .catch(async (error) => {
+                      return session
+                        .abortTransaction()
+                        .then(() => session.endSession())
+                        .then(() => {
+                          this.logger.error(JSON.stringify(error));
+                          return reject({
+                            status: false,
+                            code: Status.ABORTED,
+                            msg: error,
+                          });
+                        });
+                    });
+                })
+                .catch(async (error) => {
+                  return session
+                    .abortTransaction()
+                    .then(() => session.endSession())
+                    .then(() => {
                       this.logger.error(JSON.stringify(error));
-                      await session.abortTransaction();
-                      await session.endSession();
                       return reject({
                         status: false,
                         code: Status.ABORTED,
                         msg: error,
                       });
                     });
-                })
-                .catch(async (error) => {
-                  this.logger.error(JSON.stringify(error));
-                  await session.abortTransaction();
-                  await session.endSession();
-                  return reject({
-                    status: false,
-                    code: Status.ABORTED,
-                    msg: error,
-                  });
                 });
             })
             .catch(async (reason) => {
-              this.logger.error(JSON.stringify(reason));
-              await session.abortTransaction();
-              await session.endSession();
-              return reject({
-                status: false,
-                code: Status.FAILED_PRECONDITION,
-                msg: reason,
-              });
+              return session
+                .abortTransaction()
+                .then(() => session.endSession())
+                .then(() => {
+                  this.logger.error(JSON.stringify(reason));
+                  return reject({
+                    status: false,
+                    code: Status.FAILED_PRECONDITION,
+                    msg: reason,
+                  });
+                });
             });
         case ConnectionStates.disconnected:
           return reject({
