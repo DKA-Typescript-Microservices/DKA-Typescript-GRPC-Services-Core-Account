@@ -114,8 +114,8 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               throw error;
             }),
           ])
-            .then(async ([info, credential]) => {
-              const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id });
+            .then(async ([info, credential, place]) => {
+              const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id, place: place.id });
               return account
                 .save({ session })
                 .then(async (finalResult: any) => {
