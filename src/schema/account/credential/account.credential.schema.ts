@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../../../model/database/account/credential/account.credential.model';
 import { ModelConfig } from '../../../config/const/model.config';
+import bcrypt from 'bcrypt';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
@@ -53,8 +54,10 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     },
     password: {
       type: mongoose.Schema.Types.String,
-      index: true,
       required: true,
+      set: function (password: string) {
+        return bcrypt.hashSync(password, 10);
+      },
     },
   },
   {

@@ -22,6 +22,7 @@ import {
 import { ModelConfig } from '../../config/const/model.config';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
+import bcrypt from 'bcrypt';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -477,7 +478,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 {
                   $or: [{ username: `${request.username}` }, { email: `${request.username}` }],
                 },
-                { password: `${request.password}` },
               ],
             })
             .sort({ _id: -1 })
@@ -492,38 +492,60 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   msg: `Data Not Found`,
                   error: `Data Not Found`,
                 });
-              // next Step Get Account
-              return this.account
-                .findOne({ _id: new mongoose.Types.ObjectId(`${resultAuth.parent}`) })
-                .populate('info', '-_id -parent')
-                .populate('credential', '-_id -parent')
-                .populate('place', '-_id -parent')
-                .sort({ _id: -1 })
-                .limit(1)
-                .allowDiskUse(true)
-                .lean()
-                .exec()
-                .then((resultGet) => {
-                  if (resultGet === null || resultGet === undefined)
+
+              return bcrypt
+                .compare(request.password, resultAuth.password)
+                .then((resultHash) => {
+                  if (!resultHash)
                     return reject({
                       status: false,
-                      code: Status.NOT_FOUND,
-                      msg: `Data Not Found`,
-                      error: `Data Not Found`,
+                      code: Status.UNAUTHENTICATED,
+                      msg: `Wrong Password. Not Authorize`,
+                      details: 'Wrong Password. Not Authorize',
                     });
-                  /** Successfully Response **/
-                  // Remove _id
-                  resultGet.id = resultGet._id.toString(); // Set the `id` field
-                  delete resultGet._id; // Remove the original _id field
-                  return resolve(resultGet);
+
+                  // next Step Get Account
+                  return this.account
+                    .findOne({ _id: new mongoose.Types.ObjectId(`${resultAuth.parent}`) })
+                    .populate('info', '-_id -parent')
+                    .populate('credential', '-_id -parent')
+                    .populate('place', '-_id -parent')
+                    .sort({ _id: -1 })
+                    .limit(1)
+                    .allowDiskUse(true)
+                    .lean()
+                    .exec()
+                    .then((resultGet) => {
+                      if (resultGet === null || resultGet === undefined)
+                        return reject({
+                          status: false,
+                          code: Status.NOT_FOUND,
+                          msg: `Data Not Found`,
+                          error: `Data Not Found`,
+                        });
+                      /** Successfully Response **/
+                      // Remove _id
+                      resultGet.id = resultGet._id.toString(); // Set the `id` field
+                      delete resultGet._id; // Remove the original _id field
+                      return resolve(resultGet);
+                    })
+                    .catch((error) => {
+                      this.logger.error(error);
+                      return reject({
+                        status: false,
+                        code: Status.ABORTED,
+                        msg: `Failed Get Account Data`,
+                        error: error,
+                      });
+                    });
                 })
-                .catch((error) => {
+                .catch(async (error) => {
                   this.logger.error(error);
                   return reject({
                     status: false,
                     code: Status.ABORTED,
-                    msg: `Failed Get Account Data`,
-                    error: error,
+                    msg: `Failed Processing Hash. Not Authorize`,
+                    details: error,
                   });
                 });
             })

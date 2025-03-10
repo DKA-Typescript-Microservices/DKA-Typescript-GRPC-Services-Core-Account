@@ -10,9 +10,6 @@ import * as process from 'node:process';
 import { AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
 import { ModelConfig } from '../../config/const/model.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import * as path from 'node:path';
-
-const pathModel = path.join(__dirname, './../../model/proto');
 
 @Module({
   imports: [
