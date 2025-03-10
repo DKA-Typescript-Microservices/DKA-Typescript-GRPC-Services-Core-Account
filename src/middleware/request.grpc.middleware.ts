@@ -41,7 +41,7 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
 
     const accessToken = `${Authorization}`.split(' ')[1];
 
-    return firstValueFrom(this.sessionClient.send('session.verify', { token: accessToken }))
+    return firstValueFrom(this.sessionClient.send('account.session.verify', { token: accessToken }))
       .then((result: any) => {
         if (result.status !== undefined && !result.status) {
           return throwError(() => new RpcException(result));
