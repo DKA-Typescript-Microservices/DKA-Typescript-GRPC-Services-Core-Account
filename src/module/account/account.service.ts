@@ -64,7 +64,56 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Place Data Payloads Data**/
           const place = new this.place(payload.data.place);
           /** Save Child Collection Account **/
-          return Promise.all([info.save({ session }), credential.save({ session }), place.save({ session })])
+          return Promise.all([
+            info.save({ session }).catch(async (error) => {
+              if (error.code === 11000) {
+                return session
+                  .abortTransaction()
+                  .then(() => session.endSession())
+                  .then(() => {
+                    return Promise.reject({
+                      status: false,
+                      code: Status.ALREADY_EXISTS,
+                      msg: 'Info already exists',
+                      details: error,
+                    });
+                  });
+              }
+              throw error;
+            }),
+            credential.save({ session }).catch(async (error) => {
+              if (error.code === 11000) {
+                return session
+                  .abortTransaction()
+                  .then(() => session.endSession())
+                  .then(() => {
+                    return Promise.reject({
+                      status: false,
+                      code: Status.ALREADY_EXISTS,
+                      msg: 'Credential already exists',
+                      details: error,
+                    });
+                  });
+              }
+              throw error;
+            }),
+            place.save({ session }).catch(async (error) => {
+              if (error.code === 11000) {
+                return session
+                  .abortTransaction()
+                  .then(() => session.endSession())
+                  .then(() => {
+                    return Promise.reject({
+                      status: false,
+                      code: Status.ALREADY_EXISTS,
+                      msg: 'Place already exists',
+                      details: error,
+                    });
+                  });
+              }
+              throw error;
+            }),
+          ])
             .then(async ([info, credential]) => {
               const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id });
               return account
