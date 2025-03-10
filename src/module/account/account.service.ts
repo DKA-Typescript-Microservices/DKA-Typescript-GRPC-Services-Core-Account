@@ -278,17 +278,22 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 });
             })
             .catch(async (reason) => {
-              return session
-                .abortTransaction()
-                .then(() => session.endSession())
-                .then(() => {
-                  this.logger.error(JSON.stringify(reason));
-                  return reject({
-                    status: false,
-                    code: Status.FAILED_PRECONDITION,
-                    msg: reason,
+              if (!session.hasEnded)
+                return session
+                  .abortTransaction()
+                  .then(() => session.endSession())
+                  .then(() => {
+                    return reject({
+                      status: false,
+                      code: Status.FAILED_PRECONDITION,
+                      msg: reason,
+                    });
                   });
-                });
+              return reject({
+                status: false,
+                code: Status.FAILED_PRECONDITION,
+                msg: reason,
+              });
             });
         case ConnectionStates.disconnected:
           return reject({
