@@ -289,11 +289,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                       msg: reason,
                     });
                   });
-              return reject({
-                status: false,
-                code: Status.FAILED_PRECONDITION,
-                msg: reason,
-              });
+              return reject(reason);
             });
         case ConnectionStates.disconnected:
           return reject({
