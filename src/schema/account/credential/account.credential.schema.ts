@@ -55,8 +55,8 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
     password: {
       type: mongoose.Schema.Types.String,
       required: true,
-      set: function (password: string) {
-        return bcrypt.hashSync(password, 10);
+      set: function (password: any) {
+        return `${bcrypt.hashSync(password, 10)}`;
       },
     },
   },
