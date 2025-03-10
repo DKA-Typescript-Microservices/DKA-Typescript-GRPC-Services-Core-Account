@@ -22,7 +22,7 @@ import {
 import { ModelConfig } from '../../config/const/model.config';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -508,7 +508,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   return this.account
                     .findOne({ _id: new mongoose.Types.ObjectId(`${resultAuth.parent}`) })
                     .populate('info', '-_id -parent')
-                    .populate('credential', '-_id -parent')
+                    .populate('credential', '-_id -parent -password')
                     .populate('place', '-_id -parent')
                     .sort({ _id: -1 })
                     .limit(1)
