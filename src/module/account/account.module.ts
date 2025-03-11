@@ -39,7 +39,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         transport: Transport.TCP,
         options: {
           host: `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}`,
-          port: Number(process.env.DKA_SERVICE_SESSION_PORT || 6370),
+          port: Number(process.env.DKA_SERVICE_SESSION_PORT || 63301),
         },
       },
     ]),

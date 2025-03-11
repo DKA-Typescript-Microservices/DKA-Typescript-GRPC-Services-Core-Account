@@ -63,7 +63,7 @@ import { TlsOptions } from 'tls';
   }
 
   const urlGrpcService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
-  const urlTCPService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 6370)}`;
+  const urlTCPService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)}`;
 
   return Promise.allSettled([
     NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
@@ -87,7 +87,7 @@ import { TlsOptions } from 'tls';
       transport: Transport.TCP,
       options: {
         host: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`,
-        port: Number(`${process.env.DKA_SERVER_BRIDGE_PORT || 6370}`),
+        port: Number(`${process.env.DKA_SERVER_BRIDGE_PORT || 63300}`),
         tlsOptions: tcpOption,
       },
     }),
@@ -113,7 +113,7 @@ import { TlsOptions } from 'tls';
           .then((_) => {
             logger.log(`Running server TCP successfully In ${urlTCPService} ...`);
             //###############################################################################################################################
-            const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 6370}`;
+            const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 63301}`;
             logger.verbose(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
             //###############################################################################################################################
           })
