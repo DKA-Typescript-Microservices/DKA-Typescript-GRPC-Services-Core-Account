@@ -9,7 +9,7 @@ on:
       - prod
 
 env:
-  TAG_NAME: grpc-core-account
+  TAG_NAME: latest
 
 jobs:
   build-native:
