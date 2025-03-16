@@ -20,7 +20,7 @@ publish:
 proto:
 	@rm -rf src/model/proto/*.ts
 	@protoc --plugin="protoc-gen-ts=$(which protoc-gen-ts)" \
-	--ts_proto_opt=rpc=true,binary=true,metadata=true,addGrpcMetadata=true \
+	--ts_proto_opt=rpc=true,binary=true,metadata=true,addGrpcMetadata=true,snakeToCamel=false \
 	--proto_path=src/model/proto \
 	--ts_proto_out=src/model/proto \
 	 $(shell find src/model/proto -name "*.proto")

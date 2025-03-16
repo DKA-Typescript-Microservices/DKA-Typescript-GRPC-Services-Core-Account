@@ -5,7 +5,7 @@ export interface IAccountPlace extends Document {
   reference?: Schema.Types.ObjectId;
   parent?: Schema.Types.ObjectId;
   address: Schema.Types.String;
-  postalCode?: Schema.Types.String;
+  postal_code?: Schema.Types.String;
   /** Ini Adalah data region Untuk Melakukan Geometrik Wilayah geometric System **/
   region?: {
     /** Province Id Untuk Melakukan Data Object Provinces **/

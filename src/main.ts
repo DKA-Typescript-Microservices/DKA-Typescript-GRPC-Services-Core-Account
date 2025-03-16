@@ -74,6 +74,11 @@ import { TlsOptions } from 'tls';
         protoPath: ProtoArrayConfig.protoPath,
         loader: {
           includeDirs: [join(__dirname, 'model/proto')],
+          keepCase: true, // Jangan ubah jadi camelCase
+          longs: String,
+          enums: String,
+          defaults: true,
+          oneofs: true,
         },
         credentials: serverCredential,
         onLoadPackageDefinition: (pkg, server) => {

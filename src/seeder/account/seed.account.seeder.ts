@@ -29,12 +29,12 @@ export class SeedAccountSeeder implements Seeder {
     await Promise.all([
       this.ClassModelAccounts({
         info: {
-          firstName: 'Admin',
-          lastName: 'Admin',
+          first_name: 'Admin',
+          last_name: 'Admin',
         },
         place: {
           address: 'Grogol Utara, Kec. Kby. Lama',
-          postalCode: '12210',
+          postal_code: '12210',
         },
         credential: {
           username: 'admin',
@@ -44,12 +44,12 @@ export class SeedAccountSeeder implements Seeder {
       }),
       this.ClassModelAccounts({
         info: {
-          firstName: 'developer',
-          lastName: 'developer',
+          first_name: 'developer',
+          last_name: 'developer',
         },
         place: {
           address: 'Grogol Utara, Kec. Kby. Lama',
-          postalCode: '12210',
+          postal_code: '12210',
         },
         credential: {
           username: 'developer',

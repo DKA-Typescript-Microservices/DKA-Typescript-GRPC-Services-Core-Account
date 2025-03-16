@@ -31,11 +31,11 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
         message: 'reference account is not exists',
       },
     },
-    firstName: {
+    first_name: {
       type: mongoose.Schema.Types.String,
       required: true,
     },
-    lastName: {
+    last_name: {
       type: mongoose.Schema.Types.String,
     },
   },

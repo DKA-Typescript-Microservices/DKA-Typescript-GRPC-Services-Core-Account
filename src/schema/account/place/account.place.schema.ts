@@ -13,7 +13,7 @@ export const AccountPlaceSchema = new mongoose.Schema<IAccountPlace>(
     address: {
       type: mongoose.Schema.Types.String,
     },
-    postalCode: {
+    postal_code: {
       type: mongoose.Schema.Types.String,
     },
   },
