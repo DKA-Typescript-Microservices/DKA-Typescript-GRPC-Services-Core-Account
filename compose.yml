@@ -48,14 +48,17 @@ services:
         host_ip: 0.0.0.0
     volumes:
       - type: volume
-        source: mongo
+        source: mongo-data
         target: /data/db
     networks:
       - dka-dev
 
 volumes:
-  mongo:
-    driver: local
+  mongo-data:
+    name : dka-dev-mongo-data
+
+  mongo-backup:
+    name: dka-dev-mongo-backup
 
 networks:
   dka-dev:
