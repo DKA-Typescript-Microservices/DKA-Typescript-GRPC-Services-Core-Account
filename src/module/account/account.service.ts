@@ -557,8 +557,8 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 return reject({
                   status: false,
                   code: Status.NOT_FOUND,
-                  msg: `Data Not Found`,
-                  error: `Data Not Found`,
+                  msg: `Data Username Not Found`,
+                  error: `Data Username Not Found`,
                 });
 
               return argon2
@@ -581,15 +581,14 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     .sort({ _id: -1 })
                     .limit(1)
                     .allowDiskUse(true)
-                    .lean()
                     .exec()
                     .then((resultGet) => {
                       if (resultGet === null || resultGet === undefined)
                         return reject({
                           status: false,
                           code: Status.NOT_FOUND,
-                          msg: `Data Not Found`,
-                          error: `Data Not Found`,
+                          msg: `Account Data Not Found`,
+                          error: `Account Data Not Found`,
                         });
                       /** Successfully Response **/
                       // Remove _id
