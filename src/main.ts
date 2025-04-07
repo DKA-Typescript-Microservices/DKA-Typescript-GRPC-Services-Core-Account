@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-import { ModuleModule } from './module/module.module';
 import { Logger } from '@nestjs/common';
 import { GrpcOptions, TcpOptions, Transport } from '@nestjs/microservices';
 import * as process from 'node:process';
@@ -11,6 +10,8 @@ import { join } from 'node:path';
 import { ReflectionService } from '@grpc/reflection';
 import * as os from 'node:os';
 import { TlsOptions } from 'tls';
+import { GrpcModule } from './module/grpc/grpc.module';
+import { TcpModule } from './module/tcp/tcp.module';
 
 (async () => {
   const logger: Logger = new Logger('Services Runner');
@@ -66,7 +67,7 @@ import { TlsOptions } from 'tls';
   const urlTCPService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)}`;
 
   return Promise.allSettled([
-    NestFactory.createMicroservice<GrpcOptions>(ModuleModule, {
+    NestFactory.createMicroservice<GrpcOptions>(GrpcModule, {
       transport: Transport.GRPC,
       options: {
         url: urlGrpcService,
@@ -88,7 +89,7 @@ import { TlsOptions } from 'tls';
         },
       },
     }),
-    NestFactory.createMicroservice<TcpOptions>(ModuleModule, {
+    NestFactory.createMicroservice<TcpOptions>(TcpModule, {
       transport: Transport.TCP,
       options: {
         host: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`,
@@ -118,8 +119,6 @@ import { TlsOptions } from 'tls';
           .then((_) => {
             logger.log(`Running server TCP successfully In ${urlTCPService} ...`);
             //###############################################################################################################################
-            const sessionUrlService = `${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 63301}`;
-            logger.verbose(`This Services Pointing to Service Session in Host ${sessionUrlService}`);
             //###############################################################################################################################
           })
           .catch((error) => {

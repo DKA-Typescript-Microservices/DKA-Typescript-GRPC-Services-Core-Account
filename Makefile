@@ -1,5 +1,5 @@
-REPOSITORY_NAME=yovanggaanandhika/services
-TAG_NAME=grpc-core-account
+REPOSITORY_NAME=yovanggaanandhika/microservices-core-account
+TAG_NAME=latest
 
 # default
 # For Development

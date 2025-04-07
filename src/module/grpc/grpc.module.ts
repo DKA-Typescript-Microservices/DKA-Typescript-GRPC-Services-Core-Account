@@ -4,4 +4,4 @@ import { AccountModule } from './account/account.module';
 @Module({
   imports: [AccountModule],
 })
-export class ModuleModule {}
+export class GrpcModule {}

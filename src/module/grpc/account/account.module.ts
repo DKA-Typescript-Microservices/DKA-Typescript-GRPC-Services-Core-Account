@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import AccountSchema from '../../schema/account/account.schema';
-import AccountInfoSchema from '../../schema/account/info/account.info.schema';
-import AccountCredentialSchema from '../../schema/account/credential/account.credential.schema';
+import AccountSchema from '../../../schema/account/account.schema';
+import AccountInfoSchema from '../../../schema/account/info/account.info.schema';
+import AccountCredentialSchema from '../../../schema/account/credential/account.credential.schema';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'node:process';
-import { AccountPlaceSchema } from '../../schema/account/place/account.place.schema';
-import { ModelConfig } from '../../config/const/model.config';
+import { AccountPlaceSchema } from '../../../schema/account/place/account.place.schema';
+import { ModelConfig } from '../../../config/const/model.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({

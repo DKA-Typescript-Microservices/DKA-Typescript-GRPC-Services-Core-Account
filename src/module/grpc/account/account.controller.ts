@@ -1,11 +1,9 @@
 import { Controller, Logger, UseInterceptors } from '@nestjs/common';
 import { AccountService } from './account.service';
-import { GrpcMethod, MessagePattern, Payload, RpcException } from '@nestjs/microservices';
-import { RequestGrpcMiddleware } from '../../middleware/request.grpc.middleware';
+import { GrpcMethod, RpcException } from '@nestjs/microservices';
+import { RequestGrpcMiddleware } from '../../../middleware/request.grpc.middleware';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
-  AccountAuthRequest,
-  AccountByIDRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -13,7 +11,7 @@ import {
   AccountReadRequest,
   AccountReadResponse,
   IAccount,
-} from '../../model/proto/account/account.grpc';
+} from '../../../model/proto/account/account.grpc';
 
 @Controller()
 export class AccountController {
@@ -59,30 +57,6 @@ export class AccountController {
           message: reason.msg,
           details: reason.details,
         });
-      });
-  }
-
-  @MessagePattern('account.read.by.id')
-  async ReadById(@Payload() request: AccountByIDRequest): Promise<IAccount> {
-    return await this.accountService
-      .ReadById(request)
-      .then((result) => {
-        return result;
-      })
-      .catch((reason) => {
-        return reason;
-      });
-  }
-
-  @MessagePattern('account.auth')
-  async Auth(@Payload() request: AccountAuthRequest): Promise<IAccount> {
-    return await this.accountService
-      .Auth(request)
-      .then((result) => {
-        return result;
-      })
-      .catch((reason) => {
-        return reason;
       });
   }
 
