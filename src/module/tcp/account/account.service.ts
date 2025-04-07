@@ -7,7 +7,7 @@ import { IAccountCredential } from '../../../model/database/account/credential/a
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { AccountAuthRequest, AccountByIDRequest, IAccount } from '../../../model/proto/account/account.grpc';
 import * as argon2 from 'argon2';
-import process from 'node:process';
+import * as process from 'node:process';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
