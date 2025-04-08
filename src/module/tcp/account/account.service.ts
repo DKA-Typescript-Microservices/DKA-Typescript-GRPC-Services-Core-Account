@@ -113,7 +113,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .findOne({
               $or: [{ username: `${request.username}` }, { email: `${request.username}` }],
             })
-            .sort({ _id: -1 })
             .exec()
             .then((resultAuth: any) => {
               if (resultAuth === null || resultAuth === undefined)
