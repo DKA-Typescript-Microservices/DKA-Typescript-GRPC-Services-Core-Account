@@ -11,9 +11,16 @@ import { AccountPlaceSchema } from '../../../schema/account/place/account.place.
 import { ModelConfig } from '../../../config/const/model.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
+/**
+ * Module @import
+ * configModule : Get Configuration of enviroments
+ */
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    /** **
+     * Connection Of database to the Framework
+     */
     MongooseModule.forRoot(`mongodb://${process.env.DKA_MONGO_HOST || '127.0.0.1'}:${process.env.DKA_MONGO_PORT || 27017}`, {
       auth: {
         username: `${process.env.DKA_MONGO_USERNAME || 'root'}`,
@@ -25,6 +32,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       timeoutMS: 10000,
       directConnection: process.env.DKA_MONGO_CONNECTION_DIRECT === 'true',
     }),
+    /**
+     * Linked Schema data Into The Features
+     */
     MongooseModule.forFeature([
       { schema: AccountCredentialSchema, name: ModelConfig.accountCredential },
       { schema: AccountInfoSchema, name: ModelConfig.accountInfo },

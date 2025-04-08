@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: service-core-account
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: service-core-account
+  template:
+    metadata:
+      labels:
+        app: service-core-account
+    spec:
+      containers:
+        - name: app
+          image: yovanggaanandhika/microservices-core-account
+          ports:
+            - containerPort: 80
+            - containerPort: 63300
+          env:
+            - name: DKA_MONGO_HOST
+              value: database-core-account
+            - name: DKA_SERVER_SECURE
+              value: "false"
+            #- name: DKA_MONGO_CONNECTION_DIRECT
+            #  value: 'true'
+          resources:
+            requests:
+              memory: 100Mi
+            limits:
+              memory: 200Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-core-account-grpc
+spec:
+  type: NodePort
+  selector:
+    app: service-core-account
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30100 # ini yang expose keluar
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-core-account-tcp
+spec:
+  type: ClusterIP
+  selector:
+    app: service-core-account
+  ports:
+    - name: tcp-port
+      port: 63300
+      targetPort: 63300

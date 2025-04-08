@@ -97,6 +97,13 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  /**
+   *
+   * @param request
+   * @constructor
+   * Fucntion Data Untuk Authentification Dimana Account Divalidasi Berdasarkan Username dan Email Dan Password
+   * dari aplikasi pihak ketiga di dalam aplikasi data services
+   */
   async Auth(request: AccountAuthRequest): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
       switch (this.connection.readyState) {
