@@ -15,6 +15,7 @@ spec:
       containers:
         - name: app
           image: yovanggaanandhika/microservices-core-account
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
             - containerPort: 63300

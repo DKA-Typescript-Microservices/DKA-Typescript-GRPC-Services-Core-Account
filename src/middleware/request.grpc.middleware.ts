@@ -21,6 +21,10 @@ export class RequestGrpcMiddleware implements NestInterceptor, OnModuleInit {
     //##########################################################################
     const Authorization = ctx.get('Authorization')[0];
     //##########################################################################
+    // Tambahan ambil IP Address
+    const clientIp = ctx.get('x-forwarded-for')?.[0] || ctx.get('remote-addr')?.[0] || 'unknown';
+    this.logger.log(`Incoming request from IP: ${clientIp} to method: ${rpcMethod}`);
+    //##########################################################################
     if (Authorization === undefined || `${Authorization}`.split(' ').length !== 2)
       return throwError(
         () =>
