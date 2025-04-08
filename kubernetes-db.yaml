@@ -15,7 +15,7 @@ spec:
         - name: DKA_REPL_ENABLED
           value: "true"
       volumeMounts:
-        - name: mongo-storage
+        - name: database-core-account-storage
           mountPath: /data/db
       resources:
         requests:
@@ -25,14 +25,14 @@ spec:
           memory: 512Mi
           cpu: 800m
   volumes:
-    - name: mongo-storage
+    - name: database-core-account-storage
       persistentVolumeClaim:
-        claimName: mongo-pvc
+        claimName: database-core-account-persistent-volume
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mongo-pvc
+  name: database-core-account-persistent-volume
 spec:
   accessModes:
     - ReadWriteOnce
