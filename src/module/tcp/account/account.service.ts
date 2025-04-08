@@ -108,13 +108,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
     return new Promise(async (resolve, reject) => {
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
+          this.logger.debug(JSON.stringify(request));
           return this.credential
             .findOne({
               $or: [{ username: `${request.username}` }, { email: `${request.username}` }],
             })
             .sort({ _id: -1 })
-            .limit(1)
-            .allowDiskUse(true)
             .exec()
             .then((resultAuth: any) => {
               if (resultAuth === null || resultAuth === undefined)
