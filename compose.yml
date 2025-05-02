@@ -5,6 +5,7 @@ services:
     image: yovanggaanandhika/node:latest
     container_name: dka-services-core-account-app
     hostname: dka-services-core-account-app
+    pull_policy: always
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
     ports:
@@ -36,6 +37,7 @@ services:
     image: yovanggaanandhika/mongo:12-slim-mongo-8.0.5
     container_name: dka-services-core-account-mongo
     hostname: dka-services-core-account-mongo
+    pull_policy: always
     environment:
       DKA_REPL_ENABLED: true
     deploy:

@@ -10,10 +10,11 @@ MD
 .github
 .gitignore
 Makefile
+compose.yml
 compose.prod.yml
+compose.prod.db.yml
 README.md
 prod
-compose.yml
 test
 Dockerfile
 mongo.Dockerfile
