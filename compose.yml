@@ -7,11 +7,10 @@ services:
     hostname: dka-services-core-account-app
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
-      DKA_SERVER_SECURE: false
     ports:
       # expose by wann external public
       - target: 80
-        published: 30100
+        published: 8081
         protocol: tcp
         host_ip: 0.0.0.0
       #expose by internal kubernetes
@@ -31,7 +30,7 @@ services:
           memory: 2048M
     command: yarn run start:dev
     networks:
-      - dka-dev
+      - dka-services-core-account
 
   mongo:
     image: yovanggaanandhika/mongo:12-slim-mongo-8.0.5
@@ -54,19 +53,16 @@ services:
         host_ip: 0.0.0.0
     volumes:
       - type: volume
-        source: mongo-data
+        source: dka-services-core-account-mongo-data
         target: /data/db
     networks:
-      - dka-dev
+      - dka-services-core-account
 
 volumes:
-  mongo-data:
-    name : dka-dev-mongo-data
-
-  mongo-backup:
-    name: dka-dev-mongo-backup
+  dka-services-core-account-mongo-data:
+    name : dka-services-core-account-mongo-data
+    driver: local
 
 networks:
-  dka-dev:
+  dka-services-core-account:
     driver: bridge
-    external: true

@@ -20,9 +20,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   private readonly credential: Model<IAccountCredential>;
 
   async onModuleInit() {
-    this.logger.verbose(
-      `This Services Pointing to Service Session in Host ${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 63301}`,
-    );
+    this.logger.debug(`Pointing Service Session to ${process.env.DKA_SERVICE_SESSION_HOST || '127.0.0.1'}:${process.env.DKA_SERVICE_SESSION_PORT || 63301}`);
   }
 
   async onModuleDestroy() {}
