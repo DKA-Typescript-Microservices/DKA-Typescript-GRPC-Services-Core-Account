@@ -9,6 +9,7 @@ import { IAccountCredential } from '../../../model/database/account/credential/a
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
+  AccountAuthRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -20,6 +21,7 @@ import {
 import { ModelConfig } from '../../../config/const/model.config';
 import { AccountPlaceModel } from '../../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -411,6 +413,173 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 status: false,
                 code: Status.ABORTED,
                 msg: `Failed Get Account Data`,
+                details: error,
+              });
+            });
+        case ConnectionStates.disconnected:
+          return reject({
+            status: false,
+            code: Status.UNAVAILABLE,
+            msg: 'Database is unavailable at the moment. Please try again later.',
+            details: 'The database service is currently down. Contact the developer if the issue persists.',
+          });
+        default:
+          return reject({
+            status: false,
+            code: Status.UNKNOWN,
+            msg: 'An internal server error occurred. Please try again later.',
+            details: 'A system error was encountered. The development team is investigating.',
+          });
+      }
+    });
+  }
+
+  async AuthCredential(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<AccountAuthRequest, IAccount> }): Promise<IAccount> {
+    return new Promise(async (resolve, reject) => {
+      /** Mendeteksi Status Database Sebelum Lakukan Query **/
+      switch (this.connection.readyState) {
+        case ConnectionStates.connected:
+          return this.credential
+            .findOne({
+              $and: [
+                {
+                  $or: [{ username: `${payload.data.username}` }, { email: `${payload.data.username}` }],
+                },
+              ],
+            })
+            .allowDiskUse(true)
+            .lean()
+            .exec()
+            .then((result) => {
+              if (result === null)
+                return reject({
+                  status: false,
+                  code: Status.NOT_FOUND,
+                  msg: `Cannot Find Account Data`,
+                  details: `Cannot Find Account Data`,
+                });
+
+              return argon2
+                .verify(`${result.password}`, `${payload.data.password}`)
+                .then(() => {
+                  /** Starting Aggregation Data **/
+                  const query = this.account.aggregate(
+                    [
+                      {
+                        $match: {
+                          _id: new mongoose.Types.ObjectId(`${result.parent}`),
+                        },
+                      },
+                      {
+                        $lookup: {
+                          from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
+                          localField: 'info',
+                          foreignField: '_id',
+                          as: 'info',
+                        },
+                      },
+                      {
+                        $unwind: {
+                          path: '$info',
+                          preserveNullAndEmptyArrays: true,
+                        },
+                      },
+                      {
+                        $project: {
+                          'info.parent': 0,
+                        },
+                      },
+                      {
+                        $lookup: {
+                          from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'place'
+                          localField: 'place',
+                          foreignField: '_id',
+                          as: 'place',
+                        },
+                      },
+                      {
+                        $unwind: {
+                          path: '$place',
+                          preserveNullAndEmptyArrays: true,
+                        },
+                      },
+                      {
+                        $project: {
+                          'place.parent': 0,
+                        },
+                      },
+                      {
+                        $lookup: {
+                          from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
+                          localField: 'credential',
+                          foreignField: '_id',
+                          as: 'credential',
+                        },
+                      },
+                      {
+                        $unwind: {
+                          path: '$credential',
+                          preserveNullAndEmptyArrays: true,
+                        },
+                      },
+                      {
+                        $project: {
+                          'credential.parent': 0,
+                          'credential.password': 0,
+                        },
+                      },
+                      {
+                        $addFields: {
+                          id: '$_id', // Buat field baru `id` dari `_id`
+                        },
+                      },
+                      {
+                        $project: {
+                          _id: 0, // Hilangkan `_id`
+                        },
+                      },
+                    ],
+                    { allowDiskUse: true },
+                  );
+                  return query
+                    .exec()
+                    .then((result) => {
+                      if (result.length < 1) {
+                        return reject({
+                          status: false,
+                          code: Status.NOT_FOUND,
+                          msg: `Data Not Found`,
+                          error: `Data Not Found`,
+                        });
+                      }
+                      return resolve(result[0]);
+                    })
+                    .catch((error) => {
+                      this.logger.error(error);
+                      return reject({
+                        status: false,
+                        code: Status.ABORTED,
+                        msg: `Failed Get Account Data`,
+                        details: error,
+                      });
+                    });
+                })
+                .catch((error) => {
+                  this.logger.error(error);
+                  return reject({
+                    status: false,
+                    code: Status.UNAUTHENTICATED,
+                    msg: `Gagal Menverifikasi password Atau password Salah`,
+                    details: error,
+                  });
+                });
+            })
+            .catch((error) => {
+              this.logger.error(error);
+              return reject({
+                status: false,
+                code: Status.INTERNAL,
+                msg: `Internal Error Find Account Data`,
                 details: error,
               });
             });
