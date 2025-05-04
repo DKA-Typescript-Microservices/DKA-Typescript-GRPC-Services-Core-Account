@@ -20,9 +20,12 @@ services:
         protocol: tcp
         host_ip: 0.0.0.0
     volumes:
+      - type: tmpfs
+        target: /home/app/dist
       - type: bind
         source: .
         target: /home/app
+
     deploy:
       resources:
         reservations:
@@ -61,6 +64,7 @@ services:
       - dka-services-core-account
 
 volumes:
+
   dka-services-core-account-mongo-data:
     name : dka-services-core-account-mongo-data
     driver: local

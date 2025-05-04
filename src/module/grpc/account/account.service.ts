@@ -45,7 +45,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
    * @constructor
    */
   async Create(payload: { data: AccountCreateRequest; metadata: Metadata; call: ServerUnaryCall<AccountCreateRequest, AccountCreateResponse> }): Promise<AccountCreateResponse> {
-    const authSession: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -112,7 +111,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             }),
           ])
             .then(async ([info, credential, place]) => {
-              const account = new this.account({ reference: authSession.id, credential: credential.id, info: info.id, place: place.id });
+              const account = new this.account({ credential: credential.id, info: info.id, place: place.id });
               return account
                 .save({ session })
                 .then(async (finalResult: any) => {
@@ -306,43 +305,13 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
-    const session: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
-          /** Converted Id Owner Data Self to ObjectId **/
-          const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${session.id}`);
           /** Starting Aggregation Data **/
           const query = this.account.aggregate(
             [
-              {
-                $match: {
-                  $or: [{ _id: IdOfOwnerAccount }],
-                },
-              },
-              {
-                $graphLookup: {
-                  from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
-                  startWith: '$_id',
-                  connectFromField: '_id',
-                  connectToField: 'reference',
-                  as: 'children',
-                  restrictSearchWithMatch: { reference: { $exists: true } },
-                },
-              },
-              {
-                $addFields: {
-                  merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
-                },
-              },
-              { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
-              { $replaceRoot: { newRoot: '$merged' } }, // Jadikan `merged` sebagai root
-              {
-                $project: {
-                  children: 0, // Hapus field children
-                },
-              },
               {
                 $lookup: {
                   from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
@@ -464,7 +433,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async UpdateOne(payload: { data: AccountPutOneRequest; metadata: Metadata; call: ServerUnaryCall<AccountPutOneRequest, IAccount> }): Promise<IAccount> {
-    const authData: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -472,142 +440,78 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Start Session **/
           const session = await this.connection.startSession();
           session.startTransaction();
+          /** Init Model **/
+          const mongooseQuery: Map<string, Promise<UpdateWriteOpResult>> = new Map();
+          if (payload.data.set.info !== undefined) {
+            mongooseQuery.set(
+              'info',
+              this.info
+                .updateOne(
+                  {
+                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                  },
+                  { $set: payload.data.set.info },
+                  { session },
+                )
+                .exec(),
+            );
+          }
+          if (payload.data.set.place !== undefined) {
+            mongooseQuery.set(
+              'place',
+              this.place
+                .updateOne(
+                  {
+                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                  },
+                  { $set: payload.data.set.info },
+                  { session },
+                )
+                .exec(),
+            );
+          }
+          if (payload.data.set.credential !== undefined) {
+            mongooseQuery.set(
+              'credential',
+              this.credential
+                .updateOne(
+                  {
+                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                  },
+                  { $set: payload.data.set.credential },
+                  { session },
+                )
+                .exec(),
+            );
+          }
 
-          /** Converted Id Owner Data Self to ObjectId **/
-          const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${authData.id}`);
-
-          /** Checked Data Query if Data In Range In Child **/
-          const query = this.account.aggregate(
-            [
-              {
-                $match: {
-                  $or: [{ _id: IdOfOwnerAccount }],
-                },
-              },
-              {
-                $graphLookup: {
-                  from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
-                  startWith: '$_id',
-                  connectFromField: '_id',
-                  connectToField: 'reference',
-                  as: 'children',
-                  restrictSearchWithMatch: { reference: { $exists: true } },
-                },
-              },
-              {
-                $addFields: {
-                  merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
-                },
-              },
-              { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
-              { $replaceRoot: { newRoot: '$merged' } },
-            ],
-            { session, allowDiskUse: true },
-          );
-
-          return query
-            .exec()
-            .then(async (accountAccepted) => {
-              const ListUser = accountAccepted.map((data) => data._id);
-              const checkUserIsGranted = ListUser.some((data) => data == payload.data.query.id);
-
-              if (!checkUserIsGranted) {
+          return Promise.all<UpdateResult>(Array.from(mongooseQuery.values()))
+            .then(async (result) => {
+              const filterSucceeded = result.filter((data) => data.modifiedCount == 1);
+              if (filterSucceeded.length !== mongooseQuery.size) {
                 await session.abortTransaction();
                 await session.endSession();
                 return reject({
                   status: false,
-                  code: Status.UNAUTHENTICATED,
-                  msg: 'Your Account Not Granted to Update This Data',
-                  details: 'Your Account Not Granted to Update This Data. Check Your Permission',
+                  code: Status.RESOURCE_EXHAUSTED,
+                  msg: 'Data Not Updated. Failed To Update',
+                  details: 'Data Not Updated. may data is same old data. or not accepted',
                 });
               }
 
-              /** Init Model **/
-              const mongooseQuery: Map<string, Promise<UpdateWriteOpResult>> = new Map();
-              if (payload.data.set.info !== undefined) {
-                mongooseQuery.set(
-                  'info',
-                  this.info
-                    .updateOne(
-                      {
-                        $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
-                      },
-                      { $set: payload.data.set.info },
-                      { session },
-                    )
-                    .exec(),
-                );
-              }
-
-              if (payload.data.set.place !== undefined) {
-                mongooseQuery.set(
-                  'place',
-                  this.place
-                    .updateOne(
-                      {
-                        $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
-                      },
-                      { $set: payload.data.set.info },
-                      { session },
-                    )
-                    .exec(),
-                );
-              }
-
-              if (payload.data.set.credential !== undefined) {
-                mongooseQuery.set(
-                  'credential',
-                  this.credential
-                    .updateOne(
-                      {
-                        $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
-                      },
-                      { $set: payload.data.set.credential },
-                      { session },
-                    )
-                    .exec(),
-                );
-              }
-
-              return Promise.all<UpdateResult>(Array.from(mongooseQuery.values()))
-                .then(async (result) => {
-                  const filterSucceeded = result.filter((data) => data.modifiedCount == 1);
-                  if (filterSucceeded.length !== mongooseQuery.size) {
-                    await session.abortTransaction();
-                    await session.endSession();
-                    return reject({
-                      status: false,
-                      code: Status.RESOURCE_EXHAUSTED,
-                      msg: 'Data Not Updated. Failed To Update',
-                      details: 'Data Not Updated. may data is same old data. or not accepted',
-                    });
-                  }
-
-                  return this.account
-                    .findOne({ _id: payload.data.query.id })
-                    .populate('info')
-                    .populate('credential')
-                    .populate('place')
-                    .lean()
-                    .exec()
-                    .then(async (resultGet) => {
-                      resultGet.id = resultGet._id.toString(); // Set the `id` field
-                      delete resultGet._id; // Remove the original _id field
-                      await session.commitTransaction();
-                      await session.endSession();
-                      return resolve(resultGet);
-                    })
-                    .catch(async (error) => {
-                      this.logger.error(JSON.stringify(error));
-                      await session.abortTransaction();
-                      await session.endSession();
-                      return reject({
-                        status: false,
-                        code: Status.FAILED_PRECONDITION,
-                        msg: 'Failed To get new Data ',
-                        details: 'Failed To get new Data',
-                      });
-                    });
+              return this.account
+                .findOne({ _id: payload.data.query.id })
+                .populate('info')
+                .populate('credential')
+                .populate('place')
+                .lean()
+                .exec()
+                .then(async (resultGet) => {
+                  resultGet.id = resultGet._id.toString(); // Set the `id` field
+                  delete resultGet._id; // Remove the original _id field
+                  await session.commitTransaction();
+                  await session.endSession();
+                  return resolve(resultGet);
                 })
                 .catch(async (error) => {
                   this.logger.error(JSON.stringify(error));
@@ -615,9 +519,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   await session.endSession();
                   return reject({
                     status: false,
-                    code: Status.INTERNAL,
-                    msg: 'Failed To Promise Task',
-                    details: 'Failed To Promise Task',
+                    code: Status.FAILED_PRECONDITION,
+                    msg: 'Failed To get new Data ',
+                    details: 'Failed To get new Data',
                   });
                 });
             })
@@ -627,9 +531,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               await session.endSession();
               return reject({
                 status: false,
-                code: Status.UNAVAILABLE,
-                msg: 'Failed To Get Previleged Read Child Account',
-                details: 'Failed To Get Previleged Read Child Account.',
+                code: Status.INTERNAL,
+                msg: 'Failed To Promise Task',
+                details: 'Failed To Promise Task',
               });
             });
         case ConnectionStates.disconnected:
@@ -651,7 +555,6 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async DeleteOne(payload: { data: AccountDeleteOneRequest; metadata: Metadata; call: ServerUnaryCall<AccountDeleteOneRequest, IAccount> }): Promise<IAccount> {
-    const authData: any = payload.metadata.get('session')[0];
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -659,38 +562,9 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Start Session **/
           const session = await this.connection.startSession();
           session.startTransaction();
-          /** Converted Id Owner Data Self to ObjectId **/
-          const IdOfOwnerAccount = new mongoose.Types.ObjectId(`${authData.id}`);
           /** Checked Data Query if Data In Range In Child **/
           const query = this.account.aggregate(
             [
-              {
-                $match: {
-                  $or: [{ _id: IdOfOwnerAccount }],
-                },
-              },
-              {
-                $graphLookup: {
-                  from: ModelConfig.account, // Pastikan ini nama koleksi yang benar
-                  startWith: '$_id',
-                  connectFromField: '_id',
-                  connectToField: 'reference',
-                  as: 'children',
-                  restrictSearchWithMatch: { reference: { $exists: true } },
-                },
-              },
-              {
-                $addFields: {
-                  merged: { $concatArrays: [['$$ROOT'], '$children'] }, // Gabungkan root + children
-                },
-              },
-              { $unwind: '$merged' }, // Pecah array `merged` jadi dokumen terpisah
-              { $replaceRoot: { newRoot: '$merged' } },
-              {
-                $project: {
-                  children: 0, // Hapus field children
-                },
-              },
               {
                 $lookup: {
                   from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
@@ -766,31 +640,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           return query
             .exec()
             .then(async (accountAccepted) => {
-              const ListUser = accountAccepted.map((data) => data.id);
-              const checkUserIsGranted = ListUser.some((data) => `${data}` === payload.data.query.id);
               const targetingDeletedUser = accountAccepted.find((data) => `${data.id}` === payload.data.query.id);
-              if (!checkUserIsGranted) {
-                await session.abortTransaction();
-                await session.endSession();
-                return reject({
-                  status: false,
-                  code: Status.UNAUTHENTICATED,
-                  msg: 'Your Account Not Granted to Update This Data',
-                  details: 'Your Account Not Granted to Update This Data. Check Your Permission',
-                });
-              }
-
-              if (authData.id == payload.data.query.id) {
-                await session.abortTransaction();
-                await session.endSession();
-                return reject({
-                  status: false,
-                  code: Status.UNAVAILABLE,
-                  msg: 'You Cannot Delete Account Same With This Account',
-                  details: 'You Cannot Delete Account Same With This Account. Please Relogin Your Administrator',
-                });
-              }
-
               /** Init Model **/
               const mongooseQuery: Map<string, Promise<DeleteResult>> = new Map();
 
@@ -799,7 +649,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.credential
                   .deleteOne(
                     {
-                      $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
                     },
                     { session },
                   )
@@ -811,7 +661,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.info
                   .deleteOne(
                     {
-                      $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
                     },
                     { session },
                   )
@@ -823,7 +673,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.place
                   .deleteOne(
                     {
-                      $and: [{ parent: { $in: ListUser } }, { parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
                     },
                     { session },
                   )

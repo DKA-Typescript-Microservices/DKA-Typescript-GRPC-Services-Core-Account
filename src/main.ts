@@ -63,14 +63,11 @@ import { TcpModule } from './module/tcp/tcp.module';
     };
   }
 
-  const urlGrpcService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`;
-  const urlTCPService = `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)}`;
-
   return Promise.allSettled([
     NestFactory.createMicroservice<GrpcOptions>(GrpcModule, {
       transport: Transport.GRPC,
       options: {
-        url: urlGrpcService,
+        url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
         package: ProtoArrayConfig.package,
         protoPath: ProtoArrayConfig.protoPath,
         loader: {
@@ -103,13 +100,13 @@ import { TcpModule } from './module/tcp/tcp.module';
         grpc?.value
           .listen()
           .then((_) => {
-            logger.log(`Running server GRPC successfully In ${urlGrpcService} ...`);
+            logger.log(`Running server GRPC successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)} ...`);
           })
           .catch((error) => {
             logger.error(error);
           });
       } else {
-        logger.log(`Running server GRPC Failed In ${urlGrpcService} ...`);
+        logger.log(`Running server GRPC Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)} ...`);
         logger.error(grpc.reason);
       }
 
@@ -117,7 +114,7 @@ import { TcpModule } from './module/tcp/tcp.module';
         tcp?.value
           .listen()
           .then((_) => {
-            logger.log(`Running server TCP successfully In ${urlTCPService} ...`);
+            logger.log(`Running server TCP successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)} ...`);
             //###############################################################################################################################
             //###############################################################################################################################
           })
@@ -125,7 +122,7 @@ import { TcpModule } from './module/tcp/tcp.module';
             logger.error(error);
           });
       } else {
-        logger.log(`Running server TCP Failed In ${urlTCPService} ...`);
+        logger.log(`Running server TCP Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)} ...`);
         logger.error(tcp.reason);
       }
     })

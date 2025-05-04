@@ -1,7 +1,6 @@
-import { Controller, Logger, UseInterceptors } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
-import { RequestGrpcMiddleware } from '../../../middleware/request.grpc.middleware';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
   AccountCreateRequest,
@@ -19,7 +18,6 @@ export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @GrpcMethod('Resources', 'Create')
-  @UseInterceptors(RequestGrpcMiddleware)
   async Create(data: AccountCreateRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountCreateResponse> {
     return this.accountService
       .Create({
@@ -40,7 +38,6 @@ export class AccountController {
   }
 
   @GrpcMethod('Resources', 'ReadAll')
-  @UseInterceptors(RequestGrpcMiddleware)
   async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
     return await this.accountService
       .ReadAll({
@@ -61,7 +58,6 @@ export class AccountController {
   }
 
   @GrpcMethod('Resources', 'UpdateOne')
-  @UseInterceptors(RequestGrpcMiddleware)
   async UpdateOne(data: AccountPutOneRequest, metadata: Metadata, call: ServerUnaryCall<AccountPutOneRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .UpdateOne({
@@ -82,7 +78,6 @@ export class AccountController {
   }
 
   @GrpcMethod('Resources', 'DeleteOne')
-  @UseInterceptors(RequestGrpcMiddleware)
   async DeleteOne(data: AccountDeleteOneRequest, metadata: Metadata, call: ServerUnaryCall<AccountDeleteOneRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .DeleteOne({
