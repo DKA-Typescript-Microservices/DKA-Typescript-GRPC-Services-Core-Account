@@ -8,4 +8,4 @@ COPY . .
 # yarn install
 RUN yarn install && yarn run build && yarn cache clean && rm -rf /root/.cache/yarn && rm -rf node_modules/.cache
 # remove src folder, Remove config json,
-RUN rm -rf src javascript-obfuscator.json nest-cli.json tsconfig** .npmrc .yarnrc.yml
+RUN rm -rf src javascript-obfuscator.json nest-cli.json tsconfig** .npmrc .yarnrc.yml kubernetes-backend.yaml kubernetes-db.yaml

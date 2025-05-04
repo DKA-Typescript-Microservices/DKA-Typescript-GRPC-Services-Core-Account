@@ -13,6 +13,8 @@ Makefile
 compose.yml
 compose.prod.yml
 compose.prod.db.yml
+kubernetes-backend.yaml
+kubernetes-db.yaml
 README.md
 prod
 test

@@ -10,6 +10,12 @@ build: clean
 clean:
 	rm -rf dist
 
+run-db:
+	docker compose -f compose.prod.yml up -d
+
+clear-db:
+	docker compose -f compose.prod.yml down -v
+
 # docker command
 pull:
 	docker pull ${REPOSITORY_NAME}:${TAG_NAME}
