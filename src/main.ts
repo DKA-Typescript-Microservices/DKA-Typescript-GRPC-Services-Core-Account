@@ -11,6 +11,7 @@ import { ReflectionService } from '@grpc/reflection';
 import * as os from 'node:os';
 import { GrpcModule } from './module/grpc/grpc.module';
 import { HttpModule } from './module/http/http.module';
+import FastifyCors from '@fastify/cors';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } from 'fastify';
 
@@ -67,6 +68,14 @@ import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } fr
     };
   }
 
+  const fastifyAdater = new FastifyAdapter({
+    ...fastifyOptions,
+  });
+
+  await fastifyAdater.register(FastifyCors, {
+    origin: '*',
+  });
+
   return Promise.allSettled([
     NestFactory.createMicroservice<GrpcOptions>(GrpcModule, {
       transport: Transport.GRPC,
@@ -90,7 +99,7 @@ import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } fr
         },
       },
     }),
-    NestFactory.create<NestFastifyApplication>(HttpModule, new FastifyAdapter(fastifyOptions)),
+    NestFactory.create<NestFastifyApplication>(HttpModule, fastifyAdater),
   ])
     .then(async ([grpc, http]) => {
       if (grpc.status === 'fulfilled') {

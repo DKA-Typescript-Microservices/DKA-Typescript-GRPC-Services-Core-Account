@@ -53,6 +53,7 @@
   "devDependencies": {
     "@dkaframework/security": "^1.2.7",
     "@faker-js/faker": "^9.5.0",
+    "@fastify/cors": "^11.0.1",
     "@grpc/grpc-js": "^1.13.2",
     "@grpc/proto-loader": "^0.7.13",
     "@grpc/reflection": "^1.0.4",
