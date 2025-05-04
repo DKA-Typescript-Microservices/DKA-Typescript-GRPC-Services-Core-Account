@@ -9,7 +9,6 @@ import { IAccountCredential } from '../../../model/database/account/credential/a
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
-  AccountAuthRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -22,6 +21,7 @@ import { ModelConfig } from '../../../config/const/model.config';
 import { AccountPlaceModel } from '../../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
 import * as argon2 from 'argon2';
+import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.grpc';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {

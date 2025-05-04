@@ -3,7 +3,6 @@ import { AccountService } from './account.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import {
-  AccountAuthRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
@@ -12,6 +11,7 @@ import {
   AccountReadResponse,
   IAccount,
 } from '../../../model/proto/account/account.grpc';
+import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.grpc';
 
 @Controller()
 export class AccountController {
@@ -38,7 +38,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Auth', 'Credential')
+  @GrpcMethod('Credential', 'Authorization')
   async AuthCredential(data: AccountAuthRequest, metadata: Metadata, call: ServerUnaryCall<AccountAuthRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .AuthCredential({
