@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
-import { GrpcOptions, TcpOptions, Transport } from '@nestjs/microservices';
+import { GrpcOptions, Transport } from '@nestjs/microservices';
 import * as process from 'node:process';
 import { ProtoArrayConfig } from './config/const/proto.array.config';
 import { ServerCredentials } from '@grpc/grpc-js';
@@ -9,16 +9,17 @@ import * as path from 'node:path';
 import { join } from 'node:path';
 import { ReflectionService } from '@grpc/reflection';
 import * as os from 'node:os';
-import { TlsOptions } from 'tls';
 import { GrpcModule } from './module/grpc/grpc.module';
-import { TcpModule } from './module/tcp/tcp.module';
+import { HttpModule } from './module/http/http.module';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } from 'fastify';
 
 (async () => {
   const logger: Logger = new Logger('Services Runner');
   //########################################################################
   const isServiceSecure = process.env.DKA_SERVER_SECURE === 'true';
   let serverCredential = ServerCredentials.createInsecure();
-  let tcpOption: TlsOptions | undefined = undefined;
+  let fastifyOptions: FastifyHttp2SecureOptions<any> | FastifyHttpsOptions<any> | FastifyHttpOptions<any> | undefined = undefined;
   //########################################################################
   const SSLPath = path.join(`/etc/letsencrypt/live`, `${os.hostname()}`);
   //########################################################################
@@ -55,11 +56,14 @@ import { TcpModule } from './module/tcp/tcp.module';
       false,
     );
 
-    tcpOption = {
-      ca: [fs.readFileSync(CAFile)],
-      key: fs.readFileSync(PrivateKeyFile),
-      cert: fs.readFileSync(CertFile),
-      rejectUnauthorized: true,
+    fastifyOptions = {
+      https: {
+        ca: [fs.readFileSync(CAFile)],
+        key: fs.readFileSync(PrivateKeyFile),
+        cert: fs.readFileSync(CertFile),
+        rejectUnauthorized: true,
+      },
+      http2: true,
     };
   }
 
@@ -67,7 +71,7 @@ import { TcpModule } from './module/tcp/tcp.module';
     NestFactory.createMicroservice<GrpcOptions>(GrpcModule, {
       transport: Transport.GRPC,
       options: {
-        url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)}`,
+        url: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_GRPC_PORT || 50051)}`,
         package: ProtoArrayConfig.package,
         protoPath: ProtoArrayConfig.protoPath,
         loader: {
@@ -86,35 +90,28 @@ import { TcpModule } from './module/tcp/tcp.module';
         },
       },
     }),
-    NestFactory.createMicroservice<TcpOptions>(TcpModule, {
-      transport: Transport.TCP,
-      options: {
-        host: `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`,
-        port: Number(`${process.env.DKA_SERVER_BRIDGE_PORT || 63300}`),
-        tlsOptions: tcpOption,
-      },
-    }),
+    NestFactory.create<NestFastifyApplication>(HttpModule, new FastifyAdapter(fastifyOptions)),
   ])
-    .then(async ([grpc, tcp]) => {
+    .then(async ([grpc, http]) => {
       if (grpc.status === 'fulfilled') {
         grpc?.value
           .listen()
           .then((_) => {
-            logger.log(`Running server GRPC successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)} ...`);
+            logger.log(`Running server GRPC successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_GRPC_PORT || 50051)} ...`);
           })
           .catch((error) => {
             logger.error(error);
           });
       } else {
-        logger.log(`Running server GRPC Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_PORT || 80)} ...`);
+        logger.log(`Running server GRPC Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_GRPC_PORT || 50051)} ...`);
         logger.error(grpc.reason);
       }
 
-      if (tcp.status === 'fulfilled') {
-        tcp?.value
-          .listen()
+      if (http.status === 'fulfilled') {
+        http?.value
+          .listen(Number(`${process.env.DKA_SERVER_HTTP_PORT || 80}`), `${process.env.DKA_SERVER_HOST || '0.0.0.0'}`)
           .then((_) => {
-            logger.log(`Running server TCP successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)} ...`);
+            logger.log(`Running server HTTP successfully In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_HTTP_PORT || 80)} ...`);
             //###############################################################################################################################
             //###############################################################################################################################
           })
@@ -122,8 +119,8 @@ import { TcpModule } from './module/tcp/tcp.module';
             logger.error(error);
           });
       } else {
-        logger.log(`Running server TCP Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_BRIDGE_PORT || 63300)} ...`);
-        logger.error(tcp.reason);
+        logger.log(`Running server HTTP Failed In ${process.env.DKA_SERVER_HOST || '0.0.0.0'}:${Number(process.env.DKA_SERVER_HTTP_PORT || 80)} ...`);
+        logger.error(http.reason);
       }
     })
     .catch((error) => {

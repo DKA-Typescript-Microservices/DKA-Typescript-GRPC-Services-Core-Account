@@ -10,14 +10,14 @@ services:
       DKA_MONGO_HOST: dka-services-core-account-mongo
       DKA_SERVER_SECURE: false
     ports:
-      # expose by wann external public
-      - target: 80
-        published: 8081
+      # expose by wan external public
+      - target: 50051
+        published: 50051
         protocol: tcp
         host_ip: 0.0.0.0
-      #expose by internal kubernetes
-      - target: 63300
-        published: 63300
+      # expose by internal kubernetes
+      - target: 80
+        published: 8081
         protocol: tcp
         host_ip: 0.0.0.0
     deploy:
