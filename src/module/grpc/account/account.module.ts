@@ -10,6 +10,7 @@ import * as process from 'node:process';
 import { AccountPlaceSchema } from '../../../schema/account/place/account.place.schema';
 import { ModelConfig } from '../../../config/const/model.config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AccountInfoModule } from './info/account.info.module';
 
 /**
  * Module @import
@@ -51,6 +52,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         },
       },
     ]),
+    AccountInfoModule,
   ],
   controllers: [AccountController],
   providers: [AccountService],
