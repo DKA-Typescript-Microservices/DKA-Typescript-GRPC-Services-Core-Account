@@ -438,6 +438,14 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async ReadByID(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, AccountReadByIDResponse> }): Promise<AccountReadByIDResponse> {
     return new Promise(async (resolve, reject) => {
+      if (payload.data.id === undefined)
+        return reject({
+          status: false,
+          code: Status.INVALID_ARGUMENT,
+          msg: `id Params Is Require`,
+          error: `id Params Is Require`,
+        });
+
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -567,6 +575,21 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async AuthCredential(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<AccountAuthRequest, IAccount> }): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
+      if (payload.data.username === undefined)
+        return reject({
+          status: false,
+          code: Status.INVALID_ARGUMENT,
+          msg: `Request Username Is Missing`,
+          error: `Request Username Is Missing`,
+        });
+
+      if (payload.data.password === undefined)
+        return reject({
+          status: false,
+          code: Status.INVALID_ARGUMENT,
+          msg: `Request Password Is Missing`,
+          error: `Request Password Is Missing`,
+        });
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
