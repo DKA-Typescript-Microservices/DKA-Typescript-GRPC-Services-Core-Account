@@ -10,17 +10,17 @@ services:
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
       DKA_SERVER_SECURE: false
-    ports:
+    #ports:
       # expose by wan external public
-      - target: 50051 
-        published: 50051
-        protocol: tcp
-        host_ip: 0.0.0.0
+      #- target: 50051
+      #  published: 50051
+      #  protocol: tcp
+      #  host_ip: 0.0.0.0
       # expose by internal kubernetes
-      - target: 80
-        published: 8081
-        protocol: tcp
-        host_ip: 0.0.0.0
+      #- target: 80
+      #  published: 8081
+      #  protocol: tcp
+      #  host_ip: 0.0.0.0
     deploy:
       resources:
         reservations:
@@ -29,6 +29,7 @@ services:
           memory: 200M
     networks:
       - dka-services-core-account
+      - dka-development-network
 
   mongo:
     image: yovanggaanandhika/mongo:12-slim-mongo-8.0.5
@@ -46,11 +47,6 @@ services:
         limits:
           memory: 512M
           cpus: '0.8'
-    ports:
-      - target: 27017
-        published: 27017
-        protocol: tcp
-        host_ip: 0.0.0.0
     volumes:
       - type: volume
         source: dka-services-core-account-mongo-data
@@ -66,3 +62,6 @@ volumes:
 networks:
   dka-services-core-account:
     driver: bridge
+  dka-development-network:
+    name: dka-development-network
+    external: true

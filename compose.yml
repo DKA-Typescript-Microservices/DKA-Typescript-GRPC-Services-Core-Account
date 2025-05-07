@@ -53,11 +53,6 @@ services:
         limits:
           memory: 512M
           cpus: '0.8'
-    ports:
-      - target: 27017
-        published: 27017
-        protocol: tcp
-        host_ip: 0.0.0.0
     volumes:
       - type: volume
         source: dka-services-core-account-mongo-data
