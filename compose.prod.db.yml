@@ -6,12 +6,13 @@ services:
     container_name: dka-services-core-account-app
     hostname: account.core.services.dkaapis.com
     pull_policy: always
+    restart: always
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
       DKA_SERVER_SECURE: false
     ports:
       # expose by wan external public
-      - target: 50051
+      - target: 50051 
         published: 50051
         protocol: tcp
         host_ip: 0.0.0.0
@@ -34,6 +35,7 @@ services:
     container_name: dka-services-core-account-mongo
     hostname: dka-services-core-account-mongo
     pull_policy: always
+    restart: always
     environment:
       DKA_REPL_ENABLED: true
     deploy:

@@ -9,10 +9,12 @@ import { IAccountCredential } from '../../../model/database/account/credential/a
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import {
+  AccountByIDRequest,
   AccountCreateRequest,
   AccountCreateResponse,
   AccountDeleteOneRequest,
   AccountPutOneRequest,
+  AccountReadByIDResponse,
   AccountReadRequest,
   AccountReadResponse,
   IAccount,
@@ -405,6 +407,135 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 metadata: {
                   count: result.length,
                 },
+              });
+            })
+            .catch((error) => {
+              this.logger.error(error);
+              return reject({
+                status: false,
+                code: Status.ABORTED,
+                msg: `Failed Get Account Data`,
+                details: error,
+              });
+            });
+        case ConnectionStates.disconnected:
+          return reject({
+            status: false,
+            code: Status.UNAVAILABLE,
+            msg: 'Database is unavailable at the moment. Please try again later.',
+            details: 'The database service is currently down. Contact the developer if the issue persists.',
+          });
+        default:
+          return reject({
+            status: false,
+            code: Status.UNKNOWN,
+            msg: 'An internal server error occurred. Please try again later.',
+            details: 'A system error was encountered. The development team is investigating.',
+          });
+      }
+    });
+  }
+
+  async ReadByID(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, AccountReadByIDResponse> }): Promise<AccountReadByIDResponse> {
+    return new Promise(async (resolve, reject) => {
+      /** Mendeteksi Status Database Sebelum Lakukan Query **/
+      switch (this.connection.readyState) {
+        case ConnectionStates.connected:
+          /** Starting Aggregation Data **/
+          const query = this.account.aggregate(
+            [
+              {
+                $match: {
+                  _id: new mongoose.Types.ObjectId(`${payload.data.id}`),
+                },
+              },
+              {
+                $lookup: {
+                  from: ModelConfig.accountInfo, // Nama koleksi yang di-referensikan oleh 'info'
+                  localField: 'info',
+                  foreignField: '_id',
+                  as: 'info',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$info',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  'info.parent': 0,
+                },
+              },
+              {
+                $lookup: {
+                  from: ModelConfig.accountPlace, // Nama koleksi yang di-referensikan oleh 'place'
+                  localField: 'place',
+                  foreignField: '_id',
+                  as: 'place',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$place',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  'place.parent': 0,
+                },
+              },
+              {
+                $lookup: {
+                  from: ModelConfig.accountCredential, // Nama koleksi yang di-referensikan oleh 'credential'
+                  localField: 'credential',
+                  foreignField: '_id',
+                  as: 'credential',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$credential',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  'credential.password': 0,
+                  'credential.parent': 0,
+                },
+              },
+              {
+                $addFields: {
+                  id: '$_id', // Buat field baru `id` dari `_id`
+                },
+              },
+              {
+                $project: {
+                  _id: 0, // Hilangkan `_id`
+                },
+              },
+            ],
+            { allowDiskUse: true },
+          );
+          return query
+            .exec()
+            .then((result) => {
+              if (result.length < 1) {
+                return reject({
+                  status: false,
+                  code: Status.NOT_FOUND,
+                  msg: `Data Not Found`,
+                  error: `Data Not Found`,
+                });
+              }
+              return resolve({
+                status: true,
+                code: Status.OK,
+                msg: `Successfully Get Data`,
+                data: result[0],
               });
             })
             .catch((error) => {

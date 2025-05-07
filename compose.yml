@@ -6,6 +6,7 @@ services:
     container_name: dka-services-core-account-app
     hostname: dka-services-core-account-app
     pull_policy: always
+    restart: always
     environment:
       DKA_MONGO_HOST: dka-services-core-account-mongo
     ports:
@@ -41,6 +42,7 @@ services:
     container_name: dka-services-core-account-mongo
     hostname: dka-services-core-account-mongo
     pull_policy: always
+    restart: always
     environment:
       DKA_REPL_ENABLED: true
     deploy:
