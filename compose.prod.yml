@@ -4,7 +4,7 @@ services:
   app:
     image: yovanggaanandhika/microservices-core-account:latest-mongo-8.0.5
     container_name: dka-services-core-account-app
-    hostname: account.core.services.dkaapis.com
+    hostname: dka-services-core-account-app
     pull_policy: always
     restart: always
     environment:
