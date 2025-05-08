@@ -15,6 +15,8 @@ import FastifyCors from '@fastify/cors';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } from 'fastify';
 
+import './intrument';
+
 (async () => {
   const logger: Logger = new Logger('Services Runner');
   //########################################################################
@@ -89,7 +91,6 @@ import { FastifyHttp2SecureOptions, FastifyHttpOptions, FastifyHttpsOptions } fr
           longs: String,
           enums: String,
           defaults: true,
-          oneofs: true,
         },
         credentials: serverCredential,
         onLoadPackageDefinition: (pkg, server) => {

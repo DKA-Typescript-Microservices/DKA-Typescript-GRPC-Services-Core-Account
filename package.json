@@ -61,6 +61,7 @@
     "@nestjs/platform-fastify": "^11.1.0",
     "@nestjs/schematics": "^11.0.4",
     "@nestjs/testing": "^11.0.13",
+    "@sentry/nestjs": "^9.16.1",
     "@types/jest": "^29.5.2",
     "@types/node": "^22.14.0",
     "@types/supertest": "^6.0.3",

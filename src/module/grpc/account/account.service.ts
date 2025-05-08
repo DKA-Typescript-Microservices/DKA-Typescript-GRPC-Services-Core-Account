@@ -310,6 +310,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
+      const peer = payload.call.getPeer();
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -392,6 +393,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .exec()
             .then((result) => {
               if (result.length < 1) {
+                this.logger.debug(`Request From ${peer} -> Data Account Is Not Exists. Failed Data Is Not Found `);
                 return reject({
                   status: false,
                   code: Status.NOT_FOUND,
@@ -399,6 +401,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   error: `Data Not Found`,
                 });
               }
+              this.logger.debug(`Request From ${peer} -> Action ReadAll Data Successfully Get All Data.`);
               return resolve({
                 status: true,
                 code: Status.OK,
@@ -419,6 +422,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               });
             });
         case ConnectionStates.disconnected:
+          this.logger.error(`Request From ${peer} -> Database Is Unavaible at moment. or database is Offline `);
           return reject({
             status: false,
             code: Status.UNAVAILABLE,
@@ -426,6 +430,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
+          this.logger.fatal(`Request From ${peer} -> An internal server error occurred. Please try again later.`);
           return reject({
             status: false,
             code: Status.UNKNOWN,
@@ -437,6 +442,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async ReadByID(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, AccountReadByIDResponse> }): Promise<AccountReadByIDResponse> {
+    const peer = payload.call.getPeer();
     return new Promise(async (resolve, reject) => {
       if (payload.data.id === undefined)
         return reject({
@@ -556,6 +562,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               });
             });
         case ConnectionStates.disconnected:
+          this.logger.fatal(`Request From ${peer} -> Database is unavailable at the moment. Please try again later.`);
           return reject({
             status: false,
             code: Status.UNAVAILABLE,
@@ -563,6 +570,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
+          this.logger.error(`Request From ${peer} -> An internal server error occurred. Please try again later.`);
           return reject({
             status: false,
             code: Status.UNKNOWN,
@@ -574,22 +582,27 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async AuthCredential(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<AccountAuthRequest, IAccount> }): Promise<IAccount> {
+    const peer = payload.call.getPeer();
     return new Promise(async (resolve, reject) => {
-      if (payload.data.username === undefined)
+      if (payload.data.username === undefined) {
+        this.logger.warn(`Request From ${peer} -> Request Username Is Missing.`);
         return reject({
           status: false,
           code: Status.INVALID_ARGUMENT,
           msg: `Request Username Is Missing`,
           error: `Request Username Is Missing`,
         });
+      }
 
-      if (payload.data.password === undefined)
+      if (payload.data.password === undefined) {
+        this.logger.warn(`Request From ${peer} -> Request Password Is Missing`);
         return reject({
           status: false,
           code: Status.INVALID_ARGUMENT,
           msg: `Request Password Is Missing`,
           error: `Request Password Is Missing`,
         });
+      }
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -605,13 +618,15 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .lean()
             .exec()
             .then((result) => {
-              if (result === null)
+              if (result === null) {
+                this.logger.warn(`Account ReadAll Data Not Found. Cannot Find Account Data`);
                 return reject({
                   status: false,
                   code: Status.NOT_FOUND,
                   msg: `Cannot Find Account Data`,
                   details: `Cannot Find Account Data`,
                 });
+              }
 
               return argon2
                 .verify(`${result.password}`, `${payload.data.password}`)

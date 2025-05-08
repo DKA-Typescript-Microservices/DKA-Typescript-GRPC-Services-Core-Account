@@ -17,6 +17,7 @@ export class AccountInfoService {
   private readonly info: Model<IAccountInfo>;
 
   async ReadAll(payload: { data: Empty; metadata: Metadata; call: ServerUnaryCall<Empty, AccountInfoReadResponse> }): Promise<AccountInfoReadResponse> {
+    const peer = payload.call.getPeer();
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -41,6 +42,7 @@ export class AccountInfoService {
             .exec()
             .then((result) => {
               if (result.length < 1) {
+                this.logger.warn(`Request From ${peer} -> Account Info ReadAll Data Not Found. Not Exists Data`);
                 return reject({
                   status: false,
                   code: Status.NOT_FOUND,
@@ -48,6 +50,7 @@ export class AccountInfoService {
                   error: `Data Not Found`,
                 });
               }
+              this.logger.debug(`Request From ${peer} -> accounts info data successfully Read Data`);
               return resolve({
                 status: true,
                 code: Status.OK,
@@ -68,6 +71,7 @@ export class AccountInfoService {
               });
             });
         case ConnectionStates.disconnected:
+          this.logger.fatal(`Request From ${peer} -> Database is unavailable at the moment. Please try again later.`);
           return reject({
             status: false,
             code: Status.UNAVAILABLE,
@@ -75,6 +79,7 @@ export class AccountInfoService {
             details: 'The database service is currently down. Contact the developer if the issue persists.',
           });
         default:
+          this.logger.error(`Request From ${peer} -> An internal server error occurred. Please try again later.`);
           return reject({
             status: false,
             code: Status.UNKNOWN,

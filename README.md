@@ -23,6 +23,10 @@
 
  The account Core Services with [NestJS](https://github.com/nestjs/nest) + Typescript
 
+## latar belkang data 
+microservice ini dibuat dengan grpc dengan service account di mana service ini adalah ini dari core ecosystem data.
+yang beruisi Info Username dan password lebih efisiensi untuk dilakukan mendaftarkan user create, Read Data, Update data dan delete 
+
 ### Installing
 
 ----------------------------------------
