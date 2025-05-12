@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { AccountInfoService } from './account.info.service';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
-import { AccountInfoReadResponse } from '../../../../model/proto/account/info/account.info.grpc';
+import { AccountInfoReadResponse } from '../../../../model/proto/account/info/account.info.common.grpc';
 import { Empty } from '../../../../model/proto/google/protobuf/empty';
 
 @Controller()

@@ -18,12 +18,12 @@ import {
   AccountReadRequest,
   AccountReadResponse,
   IAccount,
-} from '../../../model/proto/account/account.grpc';
+} from '../../../model/proto/account/account.common.grpc';
 import { ModelConfig } from '../../../config/const/model.config';
 import { AccountPlaceModel } from '../../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
 import * as argon2 from 'argon2';
-import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.grpc';
+import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.common.grpc';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {

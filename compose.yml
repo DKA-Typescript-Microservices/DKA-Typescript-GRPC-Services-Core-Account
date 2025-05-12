@@ -45,6 +45,11 @@ services:
     restart: always
     environment:
       DKA_REPL_ENABLED: true
+    ports:
+      - target: 27017
+        published: 27017
+        protocol: tcp
+        host_ip: 0.0.0.0
     deploy:
       resources:
         reservations:

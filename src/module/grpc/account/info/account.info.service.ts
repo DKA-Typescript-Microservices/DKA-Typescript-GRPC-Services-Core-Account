@@ -6,7 +6,7 @@ import { IAccountInfo } from '../../../../model/database/account/info/account.in
 import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import { Empty } from '../../../../model/proto/google/protobuf/empty';
-import { AccountInfoReadResponse } from '../../../../model/proto/account/info/account.info.grpc';
+import { AccountInfoReadResponse } from '../../../../model/proto/account/info/account.info.common.grpc';
 
 @Injectable()
 export class AccountInfoService {

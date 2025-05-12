@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { AccountModel } from '../../schema/account/account.schema';
-import { IAccount } from '../../model/proto/account/account.grpc';
+import { IAccount } from '../../model/proto/account/account.common.grpc';
 import { AccountInfoModel } from '../../schema/account/info/account.info.schema';
 import { IAccountInfo } from '../../model/database/account/info/account.info.model';
 import { AccountCredentialModel } from '../../schema/account/credential/account.credential.schema';
