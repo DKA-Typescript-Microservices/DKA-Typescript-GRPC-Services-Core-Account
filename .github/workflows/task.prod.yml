@@ -9,7 +9,10 @@ on:
       - prod
 
 env:
-  TAG_NAME: latest
+  DOCKER_USERNAME : ${{ secrets.DKA_DOCKER_USERNAME }}
+  DOCKER_TOKEN : ${{ secrets.DKA_DOCKER_TOKEN }}
+  DOCKER_REPO : ${{ secrets.DKA_DOCKER_REPO }}
+  DOCKER_TAG : ${{ secrets.DKA_DOCKER_TAG }}
 
 jobs:
   build-native:
@@ -30,8 +33,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DKA_DOCKER_USERNAME }}
-          password: ${{ secrets.DKA_DOCKER_TOKEN }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_TOKEN }}
 
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
@@ -40,7 +43,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DKA_DOCKER_USERNAME }}/${{ secrets.DKA_DOCKER_REPO }}:${{ env.TAG_NAME }}
+          tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
 
   build-with-db:
     runs-on: ubuntu-latest
@@ -60,8 +63,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DKA_DOCKER_USERNAME }}
-          password: ${{ secrets.DKA_DOCKER_TOKEN }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_TOKEN }}
 
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
@@ -70,4 +73,4 @@ jobs:
           file: ./mongo.Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DKA_DOCKER_USERNAME }}/${{ secrets.DKA_DOCKER_REPO }}:${{ env.TAG_NAME }}-mongo-8.0.5
+          tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}-mongo-8.0.5

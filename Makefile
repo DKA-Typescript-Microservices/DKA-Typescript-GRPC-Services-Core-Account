@@ -1,5 +1,5 @@
-REPOSITORY_NAME=yovanggaanandhika/microservices-core-account
-TAG_NAME=latest
+REPOSITORY_NAME=yovanggaanandhika/microservices-core
+TAG_NAME=account
 
 
 # build dist folder
