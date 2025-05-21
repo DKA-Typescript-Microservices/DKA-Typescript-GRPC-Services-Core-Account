@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { AccountModel } from '../../../schema/account/account.schema';
-import mongoose, { Connection, ConnectionStates, DeleteResult, Model, UpdateResult, UpdateWriteOpResult } from 'mongoose';
+import { Connection, ConnectionStates, DeleteResult, Model, UpdateResult, UpdateWriteOpResult } from 'mongoose';
 import { AccountInfoModel } from '../../../schema/account/info/account.info.schema';
 import { IAccountInfo } from '../../../model/database/account/info/account.info.model';
 import { AccountCredentialModel } from '../../../schema/account/credential/account.credential.schema';
@@ -24,6 +24,7 @@ import { AccountPlaceModel } from '../../../schema/account/place/account.place.s
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
 import * as argon2 from 'argon2';
 import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.common.grpc';
+import { validate } from 'uuid';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -452,6 +453,13 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           error: `id Params Is Require`,
         });
 
+      if (!validate(payload.data.id))
+        return reject({
+          status: false,
+          code: Status.INVALID_ARGUMENT,
+          msg: `Id Not Valid UUID`,
+          error: `Id Not Valid UUID`,
+        });
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -460,7 +468,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             [
               {
                 $match: {
-                  _id: new mongoose.Types.ObjectId(`${payload.data.id}`),
+                  _id: `${payload.data.id}`,
                 },
               },
               {
@@ -636,7 +644,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                     [
                       {
                         $match: {
-                          _id: new mongoose.Types.ObjectId(`${result.parent}`),
+                          _id: `${result.parent}`,
                         },
                       },
                       {
@@ -781,12 +789,19 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Init Model **/
           const mongooseQuery: Map<string, Promise<UpdateWriteOpResult>> = new Map();
           if (payload.data.set.info !== undefined) {
+            if (!validate(payload.data.query.id))
+              return reject({
+                status: false,
+                code: Status.INVALID_ARGUMENT,
+                msg: 'Failed To Validate UUID Parent In Info',
+                details: 'Failed To Validate UUID Parent In Info',
+              });
             mongooseQuery.set(
               'info',
               this.info
                 .updateOne(
                   {
-                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                    $and: [{ parent: `${payload.data.query.id}` }],
                   },
                   { $set: payload.data.set.info },
                   { session },
@@ -795,12 +810,19 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             );
           }
           if (payload.data.set.place !== undefined) {
+            if (!validate(payload.data.query.id))
+              return reject({
+                status: false,
+                code: Status.INVALID_ARGUMENT,
+                msg: 'Failed To Validate UUID Parent In Place',
+                details: 'Failed To Validate UUID Parent In Place',
+              });
             mongooseQuery.set(
               'place',
               this.place
                 .updateOne(
                   {
-                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                    $and: [{ parent: `${payload.data.query.id}` }],
                   },
                   { $set: payload.data.set.info },
                   { session },
@@ -809,12 +831,19 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             );
           }
           if (payload.data.set.credential !== undefined) {
+            if (!validate(payload.data.query.id))
+              return reject({
+                status: false,
+                code: Status.INVALID_ARGUMENT,
+                msg: 'Failed To Validate UUID Parent In Credential',
+                details: 'Failed To Validate UUID Parent In Credential',
+              });
             mongooseQuery.set(
               'credential',
               this.credential
                 .updateOne(
                   {
-                    $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                    $and: [{ parent: `${payload.data.query.id}` }],
                   },
                   { $set: payload.data.set.credential },
                   { session },
@@ -894,6 +923,13 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async DeleteOne(payload: { data: AccountDeleteOneRequest; metadata: Metadata; call: ServerUnaryCall<AccountDeleteOneRequest, IAccount> }): Promise<IAccount> {
     return new Promise(async (resolve, reject) => {
+      if (!validate(payload.data.query.id))
+        return reject({
+          status: false,
+          code: Status.INVALID_ARGUMENT,
+          msg: 'Failed To Validate UUID In Delete One',
+          details: 'Failed To Validate UUID In Delete One',
+        });
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -981,13 +1017,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               const targetingDeletedUser = accountAccepted.find((data) => `${data.id}` === payload.data.query.id);
               /** Init Model **/
               const mongooseQuery: Map<string, Promise<DeleteResult>> = new Map();
-
               mongooseQuery.set(
                 'credential',
                 this.credential
                   .deleteOne(
                     {
-                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: `${payload.data.query.id}` }],
                     },
                     { session },
                   )
@@ -999,7 +1034,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.info
                   .deleteOne(
                     {
-                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: `${payload.data.query.id}` }],
                     },
                     { session },
                   )
@@ -1011,7 +1046,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.place
                   .deleteOne(
                     {
-                      $and: [{ parent: new mongoose.Types.ObjectId(`${payload.data.query.id}`) }],
+                      $and: [{ parent: `${payload.data.query.id}` }],
                     },
                     { session },
                   )
@@ -1023,7 +1058,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 this.account
                   .deleteOne(
                     {
-                      _id: new mongoose.Types.ObjectId(`${payload.data.query.id}`),
+                      _id: `${payload.data.query.id}`,
                     },
                     { session },
                   )
