@@ -13,15 +13,15 @@ import AccountInfoSchema from '../../../../schema/account/info/account.info.sche
     /** **
      * Connection Of database to the Framework
      */
-    MongooseModule.forRoot(`mongodb://${process.env.DKA_MONGO_HOST || '127.0.0.1'}:${process.env.DKA_MONGO_PORT || 27017}`, {
+    MongooseModule.forRoot(`${process.env.DKA_MONGO_PROTOCOL || 'mongodb'}://${process.env.DKA_MONGO_HOST || '127.0.0.1'}:${process.env.DKA_MONGO_PORT || 27017}`, {
       auth: {
         username: `${process.env.DKA_MONGO_USERNAME || 'root'}`,
         password: `${process.env.DKA_MONGO_PASSWORD || '123456789'}`,
       },
       dbName: `${process.env.DKA_MONGO_DATABASE || 'dka-account'}`,
       replicaSet: `${process.env.DKA_MONGO_RS || 'rs0'}`,
-      connectTimeoutMS: 2000,
-      timeoutMS: 10000,
+      connectTimeoutMS: Number(process.env.DKA_MONGO_CONNECT_TIMEOUT_MS || 2000),
+      timeoutMS: Number(process.env.DKA_MONGO_TIMEOUT_MS || 10000),
       directConnection: process.env.DKA_MONGO_CONNECTION_DIRECT === 'true',
     }),
     /**
