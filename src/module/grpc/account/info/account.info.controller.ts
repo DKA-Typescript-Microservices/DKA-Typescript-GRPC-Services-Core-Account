@@ -7,6 +7,7 @@ import { Empty } from '../../../../model/proto/google/protobuf/empty';
 
 @Controller()
 export class AccountInfoController {
+  /** Action Accunt service data iun service data in controller for account info data **/
   constructor(private readonly infoService: AccountInfoService) {}
 
   @GrpcMethod('Info', 'ReadAll')
