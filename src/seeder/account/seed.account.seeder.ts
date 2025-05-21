@@ -10,6 +10,7 @@ import { IAccountCredential } from '../../model/database/account/credential/acco
 import { Seeder } from 'nestjs-seeder';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
+import { endSession } from '@sentry/nestjs';
 
 @Injectable()
 export class SeedAccountSeeder implements Seeder {
@@ -69,38 +70,52 @@ export class SeedAccountSeeder implements Seeder {
               this.place.updateOne({ _id: place.id }, { parent: finalResult._id }, { session }),
             ])
               .then(async () => {
-                await session.commitTransaction();
-                this.logger.verbose(
-                  JSON.stringify({
-                    status: true,
-                    msg: `Successfully Create Data`,
-                  }),
-                );
-                await session.endSession();
+                return session
+                  .commitTransaction()
+                  .then(() => session.endSession())
+                  .then(() => {
+                    return this.logger.verbose(
+                      JSON.stringify({
+                        status: true,
+                        msg: `Successfully Create Data`,
+                      }),
+                    );
+                  });
               })
               .catch(async (error) => {
-                this.logger.error(JSON.stringify(error));
-                await session.abortTransaction();
-                await session.endSession();
+                return session
+                  .abortTransaction()
+                  .then(() => endSession())
+                  .then(() => {
+                    return this.logger.error(JSON.stringify(error));
+                  });
               });
           })
           .catch(async (error) => {
-            this.logger.error(JSON.stringify(error));
-            await session.abortTransaction();
-            await session.endSession();
+            return session
+              .abortTransaction()
+              .then(() => endSession())
+              .then(() => {
+                return this.logger.error(JSON.stringify(error));
+              });
           });
       })
       .catch(async (reason) => {
-        this.logger.error(reason);
-        await session.abortTransaction();
-        await session.endSession();
+        return session
+          .abortTransaction()
+          .then(() => endSession())
+          .then(() => {
+            return this.logger.error(JSON.stringify(reason));
+          });
       });
   }
 
   async drop() {
-    await this.account.deleteMany({}).catch((error) => this.logger.error('account', error));
-    await this.credential.deleteMany({}).catch((error) => this.logger.error('credential', error));
-    await this.place.deleteMany({}).catch((error) => this.logger.error('place', error));
-    await this.info.deleteMany({}).catch((error) => this.logger.error('info', error));
+    return Promise.all([
+      this.info.deleteMany({}).catch((error) => this.logger.error('info', error)),
+      this.place.deleteMany({}).catch((error) => this.logger.error('place', error)),
+      this.credential.deleteMany({}).catch((error) => this.logger.error('credential', error)),
+      this.account.deleteMany({}).catch((error) => this.logger.error('account', error)),
+    ]);
   }
 }
