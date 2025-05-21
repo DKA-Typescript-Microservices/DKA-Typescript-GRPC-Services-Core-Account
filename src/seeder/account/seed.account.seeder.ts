@@ -29,29 +29,17 @@ export class SeedAccountSeeder implements Seeder {
     await Promise.all([
       this.ClassModelAccounts({
         info: {
-          first_name: 'Admin',
-          last_name: 'Admin',
-        },
-        place: {
-          address: 'Grogol Utara, Kec. Kby. Lama',
-          postal_code: '12210',
-        },
-        credential: {
-          username: 'admin',
-          email: 'admin@example.com',
-          password: 'admin',
-        },
-      }),
-      this.ClassModelAccounts({
-        info: {
+          _id: '860afa00-0b24-5880-bb89-0983ca508341',
           first_name: 'developer',
           last_name: 'developer',
         },
         place: {
+          _id: 'ab3e1c01-a277-5dff-ae73-f2171c13a3f9',
           address: 'Grogol Utara, Kec. Kby. Lama',
           postal_code: '12210',
         },
         credential: {
+          _id: '23a3956c-dba3-5d1e-b2a8-4d0a439b64f3',
           username: 'developer',
           email: 'developer@example.com',
           password: 'developer',
