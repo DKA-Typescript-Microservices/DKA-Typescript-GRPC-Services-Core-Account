@@ -1,11 +1,19 @@
 import mongoose from 'mongoose';
 import { IAccountInfo } from '../../../model/database/account/info/account.info.model';
 import { ModelConfig } from '../../../config/const/model.config';
+import { v5 } from 'uuid';
+import * as moment from 'moment-timezone';
 
 export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
   {
+    _id: {
+      type: mongoose.Schema.Types.String,
+      default: function () {
+        return v5(`${moment(moment.now()).toISOString(true)}:${ModelConfig.accountInfo}`, v5.DNS);
+      },
+    },
     reference: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
       validate: {
         validator: async function (value) {
@@ -17,7 +25,7 @@ export const AccountInfoSchema = new mongoose.Schema<IAccountInfo>(
       },
     },
     parent: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
       validate: {
         validator: async function (value) {

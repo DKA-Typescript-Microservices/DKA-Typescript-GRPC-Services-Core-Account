@@ -2,11 +2,19 @@ import mongoose, { Schema } from 'mongoose';
 import { IAccountCredential } from '../../../model/database/account/credential/account.credential.model';
 import { ModelConfig } from '../../../config/const/model.config';
 import * as argon2 from 'argon2';
+import { v5 } from 'uuid';
+import * as moment from 'moment-timezone';
 
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
+    _id: {
+      type: mongoose.Schema.Types.String,
+      default: function () {
+        return v5(`${moment(moment.now()).toISOString(true)}:${ModelConfig.accountCredential}`, v5.DNS);
+      },
+    },
     reference: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
       index: true,
       validate: {
@@ -19,7 +27,7 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
       },
     },
     parent: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
       index: true,
       validate: {

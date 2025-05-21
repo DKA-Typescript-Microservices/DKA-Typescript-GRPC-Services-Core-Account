@@ -1,9 +1,10 @@
 import { Document, Schema } from 'mongoose';
 
 export interface IAccount extends Document {
-  reference: Schema.Types.ObjectId;
-  info: Schema.Types.ObjectId;
-  place: Schema.Types.ObjectId;
-  credential: Schema.Types.ObjectId;
+  _id: Schema.Types.String;
+  reference: Schema.Types.String;
+  info: Schema.Types.String;
+  place: Schema.Types.String;
+  credential: Schema.Types.String;
   status: Schema.Types.Boolean;
 }

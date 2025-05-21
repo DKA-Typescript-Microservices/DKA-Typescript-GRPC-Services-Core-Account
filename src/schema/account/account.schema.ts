@@ -1,11 +1,19 @@
 import { IAccount } from '../../model/database/account/account.model';
 import mongoose from 'mongoose';
+import { v5 } from 'uuid';
+import * as moment from 'moment-timezone';
 import { ModelConfig } from '../../config/const/model.config';
 
 export const AccountSchema = new mongoose.Schema<IAccount>(
   {
+    _id: {
+      type: mongoose.Schema.Types.String,
+      default: function () {
+        return v5(`${moment(moment.now()).toISOString(true)}:${ModelConfig.account}`, v5.DNS);
+      },
+    },
     reference: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
       index: true,
       validate: {
@@ -18,7 +26,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       },
     },
     info: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.accountInfo,
       index: true,
       validate: {
@@ -34,7 +42,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       },
     },
     place: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.accountPlace,
       index: true,
       validate: {
@@ -50,7 +58,7 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
       },
     },
     credential: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.String,
       ref: ModelConfig.accountCredential,
       required: true,
       index: true,

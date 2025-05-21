@@ -2,8 +2,9 @@ import { Document, Schema } from 'mongoose';
 
 /** Function Untuk Melakukan pass data IAccountPlace Untuk Data Alamat, Lokasi dan Geo Pasial Data User Yang dimaksud **/
 export interface IAccountPlace extends Document {
-  reference?: Schema.Types.ObjectId;
-  parent?: Schema.Types.ObjectId;
+  _id : Schema.Types.String;
+  reference?: Schema.Types.String;
+  parent?: Schema.Types.String;
   address: Schema.Types.String;
   postal_code?: Schema.Types.String;
   /** Ini Adalah data region Untuk Melakukan Geometrik Wilayah geometric System **/
