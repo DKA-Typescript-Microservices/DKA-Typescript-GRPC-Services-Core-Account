@@ -8,7 +8,7 @@ services:
     pull_policy: always
     restart: always
     environment:
-      DKA_MONGO_HOST: dka-services-core-account-mongo
+      DKA_MONGO_HOST: dka-dev-mongo
     ports:
       # expose by wann external public
       - target: 50051
@@ -34,46 +34,10 @@ services:
           memory: 2048M
     command: yarn run start:dev
     networks:
-      - dka-services-core-account
       - dka-development-network
 
-  mongo:
-    image: yovanggaanandhika/mongo:12-slim-mongo-8.0.5
-    container_name: dka-services-core-account-mongo
-    hostname: dka-services-core-account-mongo
-    pull_policy: always
-    restart: always
-    environment:
-      DKA_REPL_ENABLED: true
-    ports:
-      - target: 27017
-        published: 27017
-        protocol: tcp
-        host_ip: 0.0.0.0
-    deploy:
-      resources:
-        reservations:
-          memory: 128M
-          cpus: '0.5'
-        limits:
-          memory: 512M
-          cpus: '0.8'
-    volumes:
-      - type: volume
-        source: dka-services-core-account-mongo-data
-        target: /data/db
-    networks:
-      - dka-services-core-account
-
-volumes:
-
-  dka-services-core-account-mongo-data:
-    name : dka-services-core-account-mongo-data
-    driver: local
 
 networks:
-  dka-services-core-account:
-    driver: bridge
   dka-development-network:
     name: dka-development-network
     external: true
