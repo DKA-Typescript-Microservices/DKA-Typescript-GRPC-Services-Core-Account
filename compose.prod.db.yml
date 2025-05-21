@@ -24,9 +24,9 @@ services:
     deploy:
       resources:
         reservations:
-          memory: 100M
+          memory: 80M
         limits:
-          memory: 200M
+          memory: 100M
     networks:
       - dka-development-network
 
