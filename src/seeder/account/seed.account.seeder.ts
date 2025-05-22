@@ -29,6 +29,7 @@ export class SeedAccountSeeder implements Seeder {
   async seed() {
     await Promise.all([
       this.ClassModelAccounts({
+        _id: '9071f87e-0c7f-5abe-a7b4-43a6b7ffb54b',
         info: {
           _id: '860afa00-0b24-5880-bb89-0983ca508341',
           first_name: 'developer',
@@ -49,7 +50,7 @@ export class SeedAccountSeeder implements Seeder {
     ]);
   }
 
-  private async ClassModelAccounts(payload: { info: any; credential: any; place?: any }) {
+  private async ClassModelAccounts(payload: { _id: string; info: any; credential: any; place?: any }) {
     /** Start Session **/
     const session = await this.connection.startSession();
     session.startTransaction();
@@ -60,7 +61,7 @@ export class SeedAccountSeeder implements Seeder {
     /** Save Child Collection Account **/
     await Promise.all([info.save({ session }), credential.save({ session }), place.save({ session })])
       .then(async ([info, credential, place]) => {
-        const account = new this.account({ credential: credential.id, info: info.id, place: place.id });
+        const account = new this.account({ _id: payload._id, credential: credential.id, info: info.id, place: place.id });
         return account
           .save({ session })
           .then(async (finalResult: any) => {
