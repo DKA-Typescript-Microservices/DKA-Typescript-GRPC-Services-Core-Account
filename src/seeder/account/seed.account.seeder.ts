@@ -10,7 +10,6 @@ import { IAccountCredential } from '../../model/database/account/credential/acco
 import { Seeder } from 'nestjs-seeder';
 import { AccountPlaceModel } from '../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../model/database/account/place/account.place.model';
-import { endSession } from '@sentry/nestjs';
 
 @Injectable()
 export class SeedAccountSeeder implements Seeder {
@@ -86,7 +85,7 @@ export class SeedAccountSeeder implements Seeder {
               .catch(async (error) => {
                 return session
                   .abortTransaction()
-                  .then(() => endSession())
+                  .then(() => session.endSession())
                   .then(() => {
                     return this.logger.error(JSON.stringify(error));
                   });
@@ -95,7 +94,7 @@ export class SeedAccountSeeder implements Seeder {
           .catch(async (error) => {
             return session
               .abortTransaction()
-              .then(() => endSession())
+              .then(() => session.endSession())
               .then(() => {
                 return this.logger.error(JSON.stringify(error));
               });
@@ -104,7 +103,7 @@ export class SeedAccountSeeder implements Seeder {
       .catch(async (reason) => {
         return session
           .abortTransaction()
-          .then(() => endSession())
+          .then(() => session.endSession())
           .then(() => {
             return this.logger.error(JSON.stringify(reason));
           });
