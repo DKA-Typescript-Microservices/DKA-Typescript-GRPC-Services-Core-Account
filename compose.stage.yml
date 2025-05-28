@@ -1,0 +1,42 @@
+name: dka-services-core-account
+
+services:
+  app:
+    image: yovanggaanandhika/microservices-core:account-mongo-8.0.5
+    container_name: dka-services-core-account-app
+    hostname: dka-services-core-account-app
+    pull_policy: always
+    restart: always
+    environment:
+      DKA_REPL_ENABLED: true
+    deploy:
+      resources:
+        reservations:
+          memory: 500M
+        limits:
+          memory: 800M
+    ports:
+      # expose by wan external public
+      - target: 50051
+        published: 50051
+        protocol: tcp
+        host_ip: 0.0.0.0
+      - target: 27017
+        published: 27018
+        protocol: tcp
+        host_ip: 0.0.0.0
+    volumes:
+      - type: volume
+        source: dka-services-core-account-mongo-data
+        target: /data/db
+    networks:
+      - dka-services-core-account
+
+volumes:
+  dka-services-core-account-mongo-data:
+    name : dka-services-core-account-mongo-data
+    driver: local
+
+networks:
+  dka-services-core-account:
+    driver: bridge
