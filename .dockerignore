@@ -10,9 +10,7 @@ MD
 .github
 .gitignore
 Makefile
-compose.yml
-compose.prod.yml
-compose.prod.db.yml
+compose.*
 kubernetes-backend.yaml
 kubernetes-db.yaml
 README.md
