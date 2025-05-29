@@ -24,6 +24,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup SSH dari Private Key Agar CI/CD dapat berkomunikasi / Login ke dalam server
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ env.SSH_SERVER_PRIVATE_KEY }}
+
       - name: Copy Template Compose file ke path Server di dalam server path
         uses: appleboy/scp-action@v0.1.7
         with:
