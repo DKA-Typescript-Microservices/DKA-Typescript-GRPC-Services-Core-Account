@@ -31,6 +31,7 @@ services:
         target: /data/db
     networks:
       - dka-services-core-account
+      - dka-development-network
 
 volumes:
   dka-services-core-account-mongo-data:
@@ -40,3 +41,6 @@ volumes:
 networks:
   dka-services-core-account:
     driver: bridge
+  dka-development-network:
+    name: dka-development-network
+    external: true
