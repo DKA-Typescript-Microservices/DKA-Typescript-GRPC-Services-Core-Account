@@ -80,7 +80,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./postgres.Dockerfile
+          file: ./mongo.Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}-mongo-8.0.5
