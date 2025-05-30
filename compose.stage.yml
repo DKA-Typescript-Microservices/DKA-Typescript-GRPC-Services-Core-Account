@@ -10,6 +10,7 @@ services:
     environment:
       DKA_REPL_ENABLED: true
       DKA_MONGO_HOST: dka-dev-mongo
+      DKA_MONGO_PASSWORD: nkbbp6k1EXnEeUDoVZPXRr9a4
     deploy:
       resources:
         reservations:
