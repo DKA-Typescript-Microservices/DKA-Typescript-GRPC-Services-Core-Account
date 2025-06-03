@@ -311,6 +311,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
+      const start = Date.now();
       const peer = payload.call.getPeer();
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -389,10 +390,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             ],
             { allowDiskUse: true },
           );
+          this.logger.debug('[AA-001] - Request like took', Date.now() - start, 'ms');
           if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
           return query
             .exec()
             .then((result) => {
+              this.logger.debug('[AA-002] - Request like took', Date.now() - start, 'ms');
               if (result.length < 1) {
                 this.logger.debug(`Request From ${peer} -> Data Account Is Not Exists. Failed Data Is Not Found `);
                 return reject({
