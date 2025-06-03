@@ -25,6 +25,7 @@ import { IAccountPlace } from '../../../model/database/account/place/account.pla
 import * as argon2 from 'argon2';
 import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.common.grpc';
 import { validate } from 'uuid';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class AccountService implements OnModuleInit, OnModuleDestroy {
@@ -51,6 +52,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
    */
   async Create(payload: { data: AccountCreateRequest; metadata: Metadata; call: ServerUnaryCall<AccountCreateRequest, AccountCreateResponse> }): Promise<AccountCreateResponse> {
     return new Promise(async (resolve, reject) => {
+      const timeStart = moment(moment.now());
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
         case ConnectionStates.connected:
@@ -65,6 +67,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           /** Place Data Payloads Data**/
           const place = new this.place(payload.data.place);
           /** Save Child Collection Account **/
+          this.logger.debug(`[ CREATE-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
           return Promise.all([
             info.save({ session }).catch(async (error) => {
               if (error.code === 11000) {
@@ -116,16 +119,19 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             }),
           ])
             .then(async ([info, credential, place]) => {
+              this.logger.debug(`[ CREATE-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               const account = new this.account({ credential: credential.id, info: info.id, place: place.id });
               return account
                 .save({ session })
                 .then(async (finalResult: any) => {
+                  this.logger.debug(`[ CREATE-003 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                   return Promise.all([
                     this.info.updateOne({ _id: info.id }, { parent: finalResult._id }, { session }),
                     this.credential.updateOne({ _id: credential.id }, { parent: finalResult._id }, { session }),
                     this.place.updateOne({ _id: place.id }, { parent: finalResult._id }, { session }),
                   ])
                     .then(async () => {
+                      this.logger.debug(`[ CREATE-004 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                       const query = this.account.aggregate(
                         [
                           {
@@ -209,6 +215,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                         .allowDiskUse(true)
                         .exec()
                         .then(async (result) => {
+                          this.logger.debug(`[ CREATE-005 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                           if (result.length < 1) {
                             return session
                               .abortTransaction()
@@ -227,6 +234,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                             .commitTransaction()
                             .then(() => session.endSession())
                             .then(() => {
+                              this.logger.debug(`[ CREATE-006 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                               return resolve({
                                 status: true,
                                 code: Status.OK,
@@ -311,7 +319,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async ReadAll(payload: { data: AccountReadRequest; metadata: Metadata; call: ServerUnaryCall<AccountReadRequest, AccountReadResponse> }): Promise<AccountReadResponse> {
     return new Promise(async (resolve, reject) => {
-      const start = Date.now();
+      const timeStart = moment(moment.now());
       const peer = payload.call.getPeer();
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -390,12 +398,12 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             ],
             { allowDiskUse: true },
           );
-          this.logger.debug('[AA-001] - Request like took', Date.now() - start, 'ms');
+          this.logger.debug(`[ READALL-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
           if (payload.data !== undefined && payload.data.options !== undefined && payload.data.options.limit !== undefined) query.limit(payload.data.options.limit);
           return query
             .exec()
             .then((result) => {
-              this.logger.debug('[AA-002] - Request like took', Date.now() - start, 'ms');
+              this.logger.debug(`[ READALL-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               if (result.length < 1) {
                 this.logger.debug(`Request From ${peer} -> Data Account Is Not Exists. Failed Data Is Not Found `);
                 return reject({
@@ -447,6 +455,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async ReadByID(payload: { data: AccountByIDRequest; metadata: Metadata; call: ServerUnaryCall<AccountByIDRequest, AccountReadByIDResponse> }): Promise<AccountReadByIDResponse> {
     const peer = payload.call.getPeer();
+    const timeStart = moment(moment.now());
     return new Promise(async (resolve, reject) => {
       if (payload.data.id === undefined)
         return reject({
@@ -548,6 +557,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           return query
             .exec()
             .then((result) => {
+              this.logger.debug(`[ READBYID-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               if (result.length < 1) {
                 return reject({
                   status: false,
@@ -594,6 +604,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
   async AuthCredential(payload: { data: AccountAuthRequest; metadata: Metadata; call: ServerUnaryCall<AccountAuthRequest, IAccount> }): Promise<IAccount> {
     const peer = payload.call.getPeer();
+    const timeStart = moment(moment.now());
     return new Promise(async (resolve, reject) => {
       if (payload.data.username === undefined) {
         this.logger.warn(`Request From ${peer} -> Request Username Is Missing.`);
@@ -629,6 +640,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
             .lean()
             .exec()
             .then((result) => {
+              this.logger.debug(`[ AUTHCREDENTIAL-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               if (result === null) {
                 this.logger.warn(`Account ReadAll Data Not Found. Cannot Find Account Data`);
                 return reject({
@@ -642,6 +654,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
               return argon2
                 .verify(`${result.password}`, `${payload.data.password}`)
                 .then(() => {
+                  this.logger.debug(`[ AUTHCREDENTIAL-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                   /** Starting Aggregation Data **/
                   const query = this.account.aggregate(
                     [
@@ -724,6 +737,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                   return query
                     .exec()
                     .then((result) => {
+                      this.logger.debug(`[ AUTHCREDENTIAL-003 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                       if (result.length < 1) {
                         return reject({
                           status: false,
@@ -782,6 +796,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async UpdateOne(payload: { data: AccountPutOneRequest; metadata: Metadata; call: ServerUnaryCall<AccountPutOneRequest, IAccount> }): Promise<IAccount> {
+    const timeStart = moment(moment.now());
     return new Promise(async (resolve, reject) => {
       /** Mendeteksi Status Database Sebelum Lakukan Query **/
       switch (this.connection.readyState) {
@@ -857,6 +872,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
           return Promise.all<UpdateResult>(Array.from(mongooseQuery.values()))
             .then(async (result) => {
+              this.logger.debug(`[ UPDATEONE-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               const filterSucceeded = result.filter((data) => data.modifiedCount == 1);
               if (filterSucceeded.length !== mongooseQuery.size) {
                 await session.abortTransaction();
@@ -877,6 +893,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
                 .lean()
                 .exec()
                 .then(async (resultGet) => {
+                  this.logger.debug(`[ UPDATEONE-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                   resultGet.id = resultGet._id.toString(); // Set the `id` field
                   delete resultGet._id; // Remove the original _id field
                   await session.commitTransaction();
@@ -925,6 +942,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
   }
 
   async DeleteOne(payload: { data: AccountDeleteOneRequest; metadata: Metadata; call: ServerUnaryCall<AccountDeleteOneRequest, IAccount> }): Promise<IAccount> {
+    const timeStart = moment(moment.now());
     return new Promise(async (resolve, reject) => {
       if (!validate(payload.data.query.id))
         return reject({
@@ -1017,6 +1035,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
           return query
             .exec()
             .then(async (accountAccepted) => {
+              this.logger.debug(`[ DELETEONE-001 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
               const targetingDeletedUser = accountAccepted.find((data) => `${data.id}` === payload.data.query.id);
               /** Init Model **/
               const mongooseQuery: Map<string, Promise<DeleteResult>> = new Map();
@@ -1070,6 +1089,7 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
               return Promise.all<DeleteResult>(Array.from(mongooseQuery.values()))
                 .then(async (result) => {
+                  this.logger.debug(`[ DELETEONE-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
                   const filterSucceeded = result.filter((data) => data.deletedCount == 1);
                   if (filterSucceeded.length !== mongooseQuery.size) {
                     await session.abortTransaction();
