@@ -98,6 +98,10 @@ import './intrument';
             new ReflectionService(pkg).addToServer(server);
           }
         },
+        channelOptions: {
+          'grpc.default_compression_algorithm': 2, // gzip
+          'grpc.default_compression_level': 3, // kompresi maksimal untuk permintaan
+        },
       },
     }),
     NestFactory.create<NestFastifyApplication>(HttpModule, fastifyAdater),
