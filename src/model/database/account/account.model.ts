@@ -1,4 +1,5 @@
 import { Document, Schema } from 'mongoose';
+import { ISysTimeInfo } from '../sys.TimeInfo.model';
 
 export interface IAccount extends Document {
   _id: Schema.Types.String;
@@ -6,5 +7,8 @@ export interface IAccount extends Document {
   info: Schema.Types.String;
   place: Schema.Types.String;
   credential: Schema.Types.String;
-  status: Schema.Types.Boolean;
+  time_created?: ISysTimeInfo;
+  time_updated?: ISysTimeInfo;
+  time_deleted?: ISysTimeInfo;
+  status?: Schema.Types.Boolean;
 }

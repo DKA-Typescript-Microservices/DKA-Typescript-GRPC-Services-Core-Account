@@ -1,5 +1,5 @@
 import { IAccount } from '../../model/database/account/account.model';
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { v5 } from 'uuid';
 import * as moment from 'moment-timezone';
 import { ModelConfig } from '../../config/const/model.config';
@@ -73,6 +73,41 @@ export const AccountSchema = new mongoose.Schema<IAccount>(
         },
         message: 'credential account ID is not exists',
       },
+    },
+    time_created: {
+      humanize: {
+        type: Schema.Types.String,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.format('HH:mm:ss DD-MM-YYYY');
+        },
+      },
+      unix: {
+        type: Schema.Types.Number,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.unix();
+        },
+      },
+    },
+    time_updated: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    time_deleted: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    status: {
+      type: Schema.Types.Boolean,
     },
   },
   {

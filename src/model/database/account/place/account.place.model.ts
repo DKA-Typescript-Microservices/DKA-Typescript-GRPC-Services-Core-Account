@@ -1,4 +1,5 @@
 import { Document, Schema } from 'mongoose';
+import { ISysTimeInfo } from '../../sys.TimeInfo.model';
 
 /** Function Untuk Melakukan pass data IAccountPlace Untuk Data Alamat, Lokasi dan Geo Pasial Data User Yang dimaksud **/
 export interface IAccountPlace extends Document {
@@ -18,4 +19,8 @@ export interface IAccountPlace extends Document {
     /** Kelurahan Data **/
     village: Schema.Types.ObjectId;
   };
+  time_created?: ISysTimeInfo;
+  time_updated?: ISysTimeInfo;
+  time_deleted?: ISysTimeInfo;
+  status?: Schema.Types.Boolean;
 }

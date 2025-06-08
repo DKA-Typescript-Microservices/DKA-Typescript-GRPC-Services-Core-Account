@@ -1,4 +1,4 @@
-import mongoose, { model } from 'mongoose';
+import mongoose, { model, Schema } from 'mongoose';
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
 import { ModelConfig } from '../../../config/const/model.config';
 import { v5 } from 'uuid';
@@ -23,6 +23,41 @@ export const AccountPlaceSchema = new mongoose.Schema<IAccountPlace>(
     },
     postal_code: {
       type: mongoose.Schema.Types.String,
+    },
+    time_created: {
+      humanize: {
+        type: Schema.Types.String,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.format('HH:mm:ss DD-MM-YYYY');
+        },
+      },
+      unix: {
+        type: Schema.Types.Number,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.unix();
+        },
+      },
+    },
+    time_updated: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    time_deleted: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    status: {
+      type: Schema.Types.Boolean,
     },
   },
   {

@@ -64,6 +64,41 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
       type: mongoose.Schema.Types.String,
       required: true,
     },
+    time_created: {
+      humanize: {
+        type: Schema.Types.String,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.format('HH:mm:ss DD-MM-YYYY');
+        },
+      },
+      unix: {
+        type: Schema.Types.Number,
+        default: function () {
+          const timeNow = moment(moment.now());
+          return timeNow.unix();
+        },
+      },
+    },
+    time_updated: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    time_deleted: {
+      humanize: {
+        type: Schema.Types.String,
+      },
+      unix: {
+        type: Schema.Types.Number,
+      },
+    },
+    status: {
+      type: Schema.Types.Boolean,
+    },
   },
   {
     collection: ModelConfig.accountCredential,
