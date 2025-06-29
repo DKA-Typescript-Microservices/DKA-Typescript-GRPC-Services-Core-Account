@@ -5,6 +5,10 @@ import * as argon2 from 'argon2';
 import { v5 } from 'uuid';
 import * as moment from 'moment-timezone';
 
+/**
+ * Action Untuk Account credential data di dalam database
+ * account credential untuk menyimpan data crendential login data di dalam database
+ */
 export const AccountCredentialSchema = new Schema<IAccountCredential>(
   {
     _id: {
@@ -13,6 +17,9 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
         return v5(`${moment(moment.now()).toISOString(true)}:${ModelConfig.accountCredential}`, v5.DNS);
       },
     },
+    /**
+     * Adalah field dimana kita dapat mengetahui di mana data akun yang menggunakan dan membuat data di dalam database ini
+     */
     reference: {
       type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
@@ -26,6 +33,9 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
         message: 'reference account is not exists',
       },
     },
+    /**
+     * adalah akun yang memenuat data akun lainnya di dalam data system account credential adalah data field parent
+     */
     parent: {
       type: mongoose.Schema.Types.String,
       ref: ModelConfig.account,
@@ -42,6 +52,10 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
         message: 'parent account is not exists',
       },
     },
+    /**
+     * adalah data email yang dipakai di dalam email login untuk keperluan authetification dan credential login session
+     *
+     */
     email: {
       type: mongoose.Schema.Types.String,
       required: true,
@@ -54,12 +68,18 @@ export const AccountCredentialSchema = new Schema<IAccountCredential>(
         message: 'Invalid email format. Please enter a valid email address, such as user@example.com.',
       },
     },
+    /**
+     * adalah data username yang dipakai login di dalam table data untuk dilakukan kalibrasi dan find data account
+     */
     username: {
       type: mongoose.Schema.Types.String,
       unique: true,
       index: true,
       required: true,
     },
+    /**
+     * adalah hash p[asswordf yang digunakan login di dalam database danm tidak menyimpan password asli di dalam database yang bisa menyebabkanm data bocor di dalam base system
+     */
     password: {
       type: mongoose.Schema.Types.String,
       required: true,
