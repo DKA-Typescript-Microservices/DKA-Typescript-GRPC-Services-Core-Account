@@ -7,6 +7,11 @@ services:
     hostname: dka-services-core-account-app
     pull_policy: always
     restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
     environment:
       DKA_REPL_ENABLED: true
       DKA_MONGO_HOST: dka-dev-mongo
