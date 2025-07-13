@@ -653,8 +653,15 @@ export class AccountService implements OnModuleInit, OnModuleDestroy {
 
               return argon2
                 .verify(`${result.password}`, `${payload.data.password}`)
-                .then(() => {
+                .then((verify) => {
                   this.logger.debug(`[ AUTHCREDENTIAL-002 ] - response time, ${moment.duration(moment(moment.now()).diff(timeStart.clone())).asMilliseconds()} ms`);
+                  if (!verify)
+                    return reject({
+                      status: false,
+                      code: Status.UNAUTHENTICATED,
+                      msg: `Password Don't not match`,
+                      error: `Password Don't not match`,
+                    });
                   /** Starting Aggregation Data **/
                   const query = this.account.aggregate(
                     [
