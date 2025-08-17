@@ -18,12 +18,12 @@ import {
   AccountReadRequest,
   AccountReadResponse,
   IAccount,
-} from '../../../model/proto/account/account.common.grpc';
+} from '../../../model/proto/core/account/account.common.grpc';
 import { ModelConfig } from '../../../config/const/model.config';
 import { AccountPlaceModel } from '../../../schema/account/place/account.place.schema';
 import { IAccountPlace } from '../../../model/database/account/place/account.place.model';
 import * as argon2 from 'argon2';
-import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.common.grpc';
+import { AccountAuthRequest } from '../../../model/proto/core/account/credential/account.credential.common.grpc';
 import { validate } from 'uuid';
 import * as moment from 'moment-timezone';
 

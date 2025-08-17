@@ -12,8 +12,8 @@ import {
   AccountReadRequest,
   AccountReadResponse,
   IAccount,
-} from '../../../model/proto/account/account.common.grpc';
-import { AccountAuthRequest } from '../../../model/proto/account/credential/account.credential.common.grpc';
+} from '../../../model/proto/core/account/account.common.grpc';
+import { AccountAuthRequest } from '../../../model/proto/core/account/credential/account.credential.common.grpc';
 
 @Controller()
 export class AccountController {
