@@ -14,13 +14,15 @@ import {
   IAccount,
 } from '../../../model/proto/core/account/account.common.grpc';
 import { AccountAuthRequest } from '../../../model/proto/core/account/credential/account.credential.common.grpc';
+import { ACCOUNT_PACKAGE_NAME, RESOURCES_SERVICE_NAME } from 'src/model/proto/core/account/account.grpc';
+import { CREDENTIAL_PACKAGE_NAME, CREDENTIAL_SERVICE_NAME } from '../../../model/proto/core/account/credential/account.credential.grpc';
 
 @Controller()
 export class AccountController {
   private readonly logger: Logger = new Logger(this.constructor.name);
   constructor(private readonly accountService: AccountService) {}
 
-  @GrpcMethod('Resources', 'Create')
+  @GrpcMethod(`${ACCOUNT_PACKAGE_NAME}.${RESOURCES_SERVICE_NAME}`, 'Create')
   async Create(data: AccountCreateRequest, metadata: Metadata, call: ServerUnaryCall<any, any>): Promise<AccountCreateResponse> {
     return this.accountService
       .Create({
@@ -40,7 +42,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Credential', 'Authorization')
+  @GrpcMethod(`${CREDENTIAL_PACKAGE_NAME}.${CREDENTIAL_SERVICE_NAME}`, 'Authorization')
   async AuthCredential(data: AccountAuthRequest, metadata: Metadata, call: ServerUnaryCall<AccountAuthRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .AuthCredential({
@@ -60,7 +62,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Resources', 'ReadByID')
+  @GrpcMethod(`${ACCOUNT_PACKAGE_NAME}.${RESOURCES_SERVICE_NAME}`, 'ReadByID')
   async ReadByID(data: AccountByIDRequest, metadata: Metadata, call: ServerUnaryCall<AccountByIDRequest, AccountReadByIDResponse>): Promise<AccountReadByIDResponse> {
     return await this.accountService
       .ReadByID({
@@ -80,7 +82,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Resources', 'ReadAll')
+  @GrpcMethod(`${ACCOUNT_PACKAGE_NAME}.${RESOURCES_SERVICE_NAME}`, 'ReadAll')
   async ReadAll(data: AccountReadRequest, metadata: Metadata, call: ServerUnaryCall<AccountReadRequest, AccountReadResponse>): Promise<AccountReadResponse> {
     return await this.accountService
       .ReadAll({
@@ -100,7 +102,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Resources', 'UpdateOne')
+  @GrpcMethod(`${ACCOUNT_PACKAGE_NAME}.${RESOURCES_SERVICE_NAME}`, 'UpdateOne')
   async UpdateOne(data: AccountPutOneRequest, metadata: Metadata, call: ServerUnaryCall<AccountPutOneRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .UpdateOne({
@@ -120,7 +122,7 @@ export class AccountController {
       });
   }
 
-  @GrpcMethod('Resources', 'DeleteOne')
+  @GrpcMethod(`${ACCOUNT_PACKAGE_NAME}.${RESOURCES_SERVICE_NAME}`, 'DeleteOne')
   async DeleteOne(data: AccountDeleteOneRequest, metadata: Metadata, call: ServerUnaryCall<AccountDeleteOneRequest, IAccount>): Promise<IAccount> {
     return await this.accountService
       .DeleteOne({
